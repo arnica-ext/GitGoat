@@ -1,0 +1,178 @@
+## Github Search Base URL.
+base_url:
+  https://api.github.com
+
+## GitHub headers without the Authorization Header
+base_headers:
+  Accept:
+    application/vnd.github.v3+json
+  User-Agent: 
+    arnica-github-mocker
+
+## Organization names to run GitGoat on.
+org_names:
+  - GitGoat-Org
+
+## Repo names to generate
+repo_names:
+  - Echinacea
+  - Lavender
+  - Chamomile
+  - Calendula
+  - Tarragon
+
+## Specific configurations per repo (optional).
+### "branch_protection" means the policy is enabled in the main branch
+### "actions_enabled" means that the repo has GitHub Action enabled
+### "allowed_actions" defines the scope of the allowed actions. The options are "all", "selected" or "local_only". It is applicable only if "actions_enabled" is true.
+### "verified_allowed_actions" defined if verified actions (not neccesarily owned by GitHub) are allowed. It is applicable only if "actions_enabled" is true.
+repo_configs:
+  Echinacea:
+    branch_protection: False
+    actions_enabled: True
+    allowed_actions: all
+  Lavender:
+    branch_protection: True
+    actions_enabled: True
+    allowed_actions: selected
+    verified_allowed_actions: False
+  Chamomile:
+    branch_protection: False
+    actions_enabled: True
+    allowed_actions: selected
+    verified_allowed_actions: True
+  Calendula:
+    branch_protection: True
+    actions_enabled: False
+  Tarragon:
+    branch_protection: False
+    actions_enabled: False
+
+## Teams are constructed in the code as [repo]-[group_postfix]
+teams:
+  - repo: Echinacea
+    group_postfixes:
+      - admin
+      - push
+      - pull
+  - repo: Lavender
+    group_postfixes:
+      - triage
+      - maintain
+      - push
+  - repo: Chamomile
+    group_postfixes:
+      - admin
+      - triage
+      - pull
+      - push
+  - repo: Calendula
+    group_postfixes:
+      - triage
+      - pull
+      - push
+  - repo: Tarragon
+    group_postfixes:
+      - pull
+      - push
+
+## Members detailed information.
+### The member_id can be retrieved by queriying https://api.github.com/users/[login]. It is required as a parameter to invite and accept the invitations to the organization.
+### The login is the username on GitHub.
+### Please DO NOT rant about the token here - it has limited scopes and it's here to simplify your "time to hello world".
+### To control group membership, add the list of groups under 'member_of_groups'
+### More granular details are in the 'days_since_last_commit' section, which represent how commits and pull requests will be executed. 
+members:
+  - member_id: 90470369
+    login: archiet-gg
+    email: archiet@gitgoat.tools
+    token: EbcLokhBwUKnN5WmJz6eOwiXN0sFC04UxDIs
+    member_of_groups:
+      - Echinacea-admin
+      - Echinacea-push
+      - Lavender-maintain
+      - Lavender-push
+      - Chamomile-admin
+      - Chamomile-triage
+      - Chamomile-pull
+      - Chamomile-push
+      - Tarragon-push
+    days_since_last_commit:
+      - repo: Echinacea
+        days: 91
+        branch: main
+        create_pr: False
+      - repo: Lavender
+        days: 14
+        branch: feature_L01
+        create_pr: True
+      - repo: Chamomile
+        days: 0
+        branch: feature_C01
+        create_pr: False
+      - repo: Tarragon
+        days: 102
+        branch: main
+        create_pr: False
+  - member_id: 90471042
+    login: billdp-gg
+    email: billdp@gitgoat.tools
+    token: Nk6u8zQjI5o1CX9QWNuY4VOpmGIo452GEq2T
+    member_of_groups:
+      - Echinacea-push
+      - Echinacea-pull
+      - Lavender-triage
+      - Lavender-push
+      - Lavender-pull
+      - Chamomile-triage
+      - Chamomile-pull
+      - Calendula-pull
+      - Tarragon-pull
+    days_since_last_commit:
+      - repo: Echinacea
+        days: 120
+        branch: main
+        create_pr: False
+      - repo: Lavender
+        days: 5
+        branch: feature_L02
+        create_pr: True
+  - member_id: 90473779
+    login: codeyf-gg
+    email: codeyf@gitgoat.tools
+    token: B81U7smn2ScvPp7nfDXj7RNpTBZvk90tYwiN
+    member_of_groups:
+      - Echinacea-pull
+      - Lavender-push
+      - Chamomile-admin
+      - Chamomile-triage
+      - Chamomile-push
+      - Calendula-push
+      - Tarragon-push
+    days_since_last_commit:
+      - repo: Lavender
+        days: 101
+        branch: feature_L03
+        create_pr: True
+      - repo: Chamomile
+        days: 0
+        branch: feature_C03
+        create_pr: True
+      - repo: Calendula
+        days: 95
+        branch: feature_C03
+        create_pr: True
+      - repo: Tarragon
+        days: 93
+        branch: main
+        create_pr: False
+  - member_id: 90473997
+    login: debu-gg
+    email: debu@gitgoat.tools
+    token: NSWR5qmC4g9Cx8Y8yXzQE4kzUmBYWf16ZTsF
+    member_of_groups:
+      - Echinacea-pull
+      - Chamomile-pull
+      - Calendula-triage
+      - Tarragon-pull
+    days_since_last_commit: []

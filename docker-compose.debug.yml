@@ -1,0 +1,11 @@
+version: '3.4'
+
+services:
+  githubmocker:
+    image: githubmocker
+    environment: 
+      - github_token: ${github_token}
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client test.py "]

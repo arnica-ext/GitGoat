@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  githubmocker:
+    image: githubmocker
+    environment: 
+      - github_token: ${github_token}
+    build:
+      context: .
+      dockerfile: ./Dockerfile

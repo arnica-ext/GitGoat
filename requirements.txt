@@ -1,0 +1,5 @@
+gitpython
+Faker
+requests
+pyyaml
+coloredlogs
