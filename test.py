@@ -2,7 +2,6 @@ import asyncio, logging, sys, os
 from src.config import Config
 from src.repository import Repository
 
-
 async def mock_test(config_file: str, orgs: list = []):
     config = Config() if config_file is None else Config(config_file)
     org_names = orgs if len(orgs) > 0 else config.org_names
