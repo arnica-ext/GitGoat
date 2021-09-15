@@ -66,7 +66,7 @@ python3 -m pip install -r requirements.txt
 ```
 
 ### Run GitGoat
-This is the moment of truth, fo for it!
+This is the moment of truth, go for it!
 ```bash
 python3 run.py --org [YOUR_ORGANIZATION_NAME]
 ```
