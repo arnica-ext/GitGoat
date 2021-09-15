@@ -5,7 +5,7 @@ GitGoat is a learning and training project that demonstrates commonn configurati
 ![logo](images/gitgoat-logo.png)
 
 # Introduction
-GitGoat was built to enable DevOps and Engineering teams to design and implement a sustainable misconfiguration prevention strategy. It can be used for proof-of-concept projects, such as [Google SLSA](https://slsa.dev "Supply-chain Levels for Software Artifacts"), [OpenSSF](https://openssf.org "Open Source Security Foundation"), [Arnica](https://arnica.io) (coming soon), and others. 
+GitGoat was built to enable DevOps and Engineering teams to design and implement a sustainable misconfiguration prevention strategy. It can be used for proof-of-concept projects, such as [OpenSSF](https://openssf.org "Open Source Security Foundation"), [Arnica](https://arnica.io) (coming soon), and others. 
 
 ## Important note
 > Since GitGoat creates misconfigured assets on GitHub, it is warmly recommended to avoid using it in a production organization. 
@@ -34,11 +34,11 @@ To create a PAT, follow these steps:
 ## Run a Docker Container
 Clone the docker image:
 ```bash
-docker pull ghcr.io/arnica-ext/gitgoat-for-github:main
+docker pull ghcr.io/arnica-ext/gitgoat:main
 ```
 Run the container by injecting the PAT as an environment variable:
 ```bash
-docker run -ti --rm ghcr.io/arnica-ext/gitgoat-for-github:main --env github_token=[YOUR_PAT] python3 run.py --org [YOUR_ORGANIZATION_NAME]
+docker run -ti --rm ghcr.io/arnica-ext/gitgoat:main --env github_token=[YOUR_PAT] python3 run.py --org [YOUR_ORGANIZATION_NAME]
 ```
 ### Additional configurations
 > GitGoat can be customzed in the `config.yaml` file. To modify this file or run GitGoat with multiple variations of the config file, please follow the instructions below. 
@@ -47,7 +47,7 @@ docker run -ti --rm ghcr.io/arnica-ext/gitgoat-for-github:main --env github_toke
 ### Set the environment variable
 Open your preferred terminal, clone this repo and change the directory to the GitGoat folder.
 ```bash
-git clone https://github.com/arnica-ext/gitgoat-for-github GitGoat
+git clone https://github.com/arnica-ext/GitGoat.git GitGoat
 cd GitGoat
 ```
 On Mac/Linux, set the environment variable `github_pat` using the following command:
@@ -68,8 +68,11 @@ python3 -m pip install -r requirements.txt
 ### Run GitGoat
 This is the moment of truth, fo for it!
 ```bash
-python3 run.py
+python3 run.py --org [YOUR_ORGANIZATION_NAME]
 ```
+The configuration file `config.yaml` can be adjusted as needed, or if multiple files are used, add `--config [YOUR_CONFIG_FILE.yaml]` to the execution path above. 
+In case you'd like to rant and rave about the tokens in this file, these accounts are dummy just to create commits in your organization. Feel free to spend the time to create your accounts, if needed.
+
 
 ## Validate the results
 If everything went well, you should see the following in your newly created organization:
