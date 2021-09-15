@@ -29,7 +29,7 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - 
-      name: Test access with current PAT (need to update to my PAT instead GitHub's as it doesn't work across orgs)
+      name: Test access with current PAT
       run: |
         export github_token=${{ secrets.GITHUB_TOKEN }} 
         echo "Org Name: $ORG_NAME"
