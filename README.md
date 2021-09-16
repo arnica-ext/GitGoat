@@ -38,7 +38,7 @@ docker pull ghcr.io/arnica-ext/gitgoat:main
 ```
 Run the container by injecting the PAT as an environment variable:
 ```bash
-docker run -ti --rm ghcr.io/arnica-ext/gitgoat:main --env github_token=[YOUR_PAT] python3 run.py --org [YOUR_ORGANIZATION_NAME]
+docker run -ti --env github_token=[YOUR_PAT] --rm ghcr.io/arnica-ext/gitgoat:main python3 run.py --org [YOUR_ORGANIZATION_NAME]
 ```
 ### Additional configurations
 > GitGoat can be customzed in the `config.yaml` file. To modify this file or run GitGoat with multiple variations of the config file, please follow the instructions below. 
