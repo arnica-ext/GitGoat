@@ -1,6 +1,6 @@
 # About GitGoat for GitHub
 GitGoat enables DevOps and Engineering teams to test security products intending to integrate with GitHub.
-GitGoat is a learning and training project that demonstrates commonn configuration errors that can potentially allow adversaries to introduce code to production. 
+GitGoat is a learning and training project that demonstrates common configuration errors that can potentially allow adversaries to introduce code to production. 
 
 ![logo](images/gitgoat-logo.png)
 
