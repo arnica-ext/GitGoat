@@ -11,7 +11,7 @@ base_headers:
 
 ## Organization names to run GitGoat on.
 org_names:
-  - GitGoat
+  - GitGoat-Org
 
 ## Repo names to generate
 repo_names:
@@ -83,10 +83,10 @@ teams:
 ### To control group membership, add the list of groups under 'member_of_groups'
 ### More granular details are in the 'days_since_last_commit' section, which represent how commits and pull requests will be executed. 
 members:
-  - member_id: 11
+  - member_id: 90470369
     login: archiet-gg
     email: archiet@gitgoat.tools
-    token: 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
+    token: EbcLokhBwUKnN5WmJz6eOwiXN0sFC04UxDIs
     member_of_groups:
       - Echinacea-admin
       - Echinacea-push
@@ -114,10 +114,10 @@ members:
         days: 102
         branch: main
         create_pr: False
-  - member_id: 12
+  - member_id: 90471042
     login: billdp-gg
     email: billdp@gitgoat.tools
-    token: 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
+    token: Nk6u8zQjI5o1CX9QWNuY4VOpmGIo452GEq2T
     member_of_groups:
       - Echinacea-push
       - Echinacea-pull
@@ -137,10 +137,10 @@ members:
         days: 5
         branch: feature_L02
         create_pr: True
-  - member_id: 13
+  - member_id: 90473779
     login: codeyf-gg
     email: codeyf@gitgoat.tools
-    token: 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
+    token: B81U7smn2ScvPp7nfDXj7RNpTBZvk90tYwiN
     member_of_groups:
       - Echinacea-pull
       - Lavender-push
@@ -166,10 +166,10 @@ members:
         days: 93
         branch: main
         create_pr: False
-  - member_id: 14
+  - member_id: 90473997
     login: debu-gg
     email: debu@gitgoat.tools
-    token: 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
+    token: NSWR5qmC4g9Cx8Y8yXzQE4kzUmBYWf16ZTsF
     member_of_groups:
       - Echinacea-pull
       - Chamomile-pull
