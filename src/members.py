@@ -21,6 +21,8 @@ class Membership:
             await conn.post(self.invitations_endpoint, json_data=data)
 
     async def __cancel_invitations(self, conn: ConnectionHandler):
+        if not self.config.is_saas:
+            return 
         resp = await conn.get(self.invitations_endpoint)
         for invitation in resp:
             await conn.delete(self.invitations_endpoint + '/' + str(invitation['id']))
@@ -28,6 +30,8 @@ class Membership:
 
     # Accept an invitation to an organization by a given user PAT.
     async def accept_invitation_to_org(self, pat):
+        if not self.config.is_saas:
+            return 
         conn = ConnectionHandler(pat, self.config.filename)
         data = {
             'state': 'active'
