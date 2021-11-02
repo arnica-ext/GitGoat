@@ -15,6 +15,7 @@ class Repository:
         if os.path.isdir(self.local_repos_path):
             self.rmtree(self.local_repos_path)
         os.mkdir(self.local_repos_path)
+        os.environ['GIT_SSL_NO_VERIFY'] = "1"
 
     def rmtree(self, top):
         for root, dirs, files in os.walk(top, topdown=False):
@@ -46,7 +47,11 @@ class Repository:
                 return
 
     async def clone(self, repo_name, username, password, email, branch = 'main'):
-        remote = f'https://{username}:{password}@github.com/{self.org}/{repo_name}.git'
+        if 'api.github.com' in self.conn.base_url:
+            remote = f'https://{username}:{password}@github.com/{self.org}/{repo_name}.git'
+        else:
+            url = self.conn.base_url.replace(f'/api/v3','').replace(f'https://','')
+            remote = f'https://{username}:{password}@{url}/{self.org}/{repo_name}.git'
         os_path = os.path.join(self.local_repos_path, repo_name)
         if not os.path.isdir(os_path):
             os.mkdir(os_path)

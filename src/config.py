@@ -1,14 +1,15 @@
-import os, logging, coloredlogs, base64, logging, yaml
+import os, logging, base64, logging, yaml, urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class Config:
 
     def __init__(self, filename: str = None) -> None:
-        coloredlogs.install()
         logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', datefmt='%m/%d/%Y %H:%M:%S', level=logging.INFO)
         self.filename = 'config.yaml' if filename is None else filename
         with open(self.filename, "r") as f:
             self.__obj = yaml.load(f, Loader=yaml.FullLoader)
         self.base_url = self.__obj['base_url']
+        self.is_saas = True if 'api.github.com' in self.base_url else False
         self.base_headers = self.__obj['base_headers']
         self.base_headers['Authorization'] = Config.generate_auth_header(Config.get_pat())
         self.org_names = self.__obj['org_names']

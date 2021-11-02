@@ -41,7 +41,7 @@ Run the container by injecting the PAT as an environment variable:
 docker run -ti --env github_token=[YOUR_PAT] --rm ghcr.io/arnica-ext/gitgoat:main python3 run.py --org [YOUR_ORGANIZATION_NAME]
 ```
 ### Additional configurations
-> GitGoat can be customzed in the `config.yaml` file. To modify this file or run GitGoat with multiple variations of the config file, please follow the instructions below. 
+> GitGoat can be customized in the `config.yaml` file. To modify this file or run GitGoat with multiple variations of the config file, please follow the instructions below. 
 
 ## Run Locally 
 ### Set the environment variable
@@ -50,13 +50,13 @@ Open your preferred terminal, clone this repo and change the directory to the Gi
 git clone https://github.com/arnica-ext/GitGoat.git GitGoat
 cd GitGoat
 ```
-On Mac/Linux, set the environment variable `github_pat` using the following command:
+On Mac/Linux, set the environment variable `github_token` using the following command:
 ```bash
-export github_pat=[YOUR_PAT]
+export github_token=[YOUR_PAT]
 ```
 On Windows, use the following command:
 ```bash
-set github_pat=[YOUR_PAT]
+set github_token=[YOUR_PAT]
 ```
 
 ### Install the requirements 
