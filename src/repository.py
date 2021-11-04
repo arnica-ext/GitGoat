@@ -1,4 +1,4 @@
-import os, stat, pathlib
+import os, stat, pathlib, time
 from src.connection import ConnectionHandler
 from src.branch import Branch
 import git
@@ -59,6 +59,7 @@ class Repository:
         if branch != 'main':
             sha = await self.branch.get_main(password, repo_name)
             await self.branch.create_branch(password, repo_name, branch, sha)
+            time.sleep(3)
         repo = git.Repo.clone_from(remote, os.path.join(os_path, username) , branch=branch)
         repo.config_writer().set_value("user", "name", username).release()
         repo.config_writer().set_value("user", "email", email).release()
