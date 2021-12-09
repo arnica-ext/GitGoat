@@ -1,6 +1,7 @@
-import os, stat, pathlib, time
+import os, stat, pathlib, time, logging
 from src.connection import ConnectionHandler
 from src.branch import Branch
+from src.config import Config
 import git
 
 
@@ -9,6 +10,7 @@ class Repository:
     def __init__(self, organization, config_file = None):
         self.org = organization
         self.endpoint = f'/orgs/{organization}/repos'
+        self.config = Config() if config_file is None else Config(config_file)
         self.conn = ConnectionHandler(config_file=config_file)
         self.branch = Branch(organization)
         self.local_repos_path = os.path.join(pathlib.Path().resolve(),'local_repos')
@@ -26,12 +28,18 @@ class Repository:
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
         os.rmdir(top)
+    
+    async def delete_existing_repos(self):
+        for repo in await self.get_all():
+            if repo['name'] in self.config.repo_names:
+                await self.conn.delete(f'/repos/{self.org}/{repo["name"]}')
+                logging.info(f"Deleted the repository {repo['name']}")
+
 
     async def get_all(self):
         return await self.conn.get(self.endpoint)
 
     async def create(self, name):
-        await self.delete(name)
         data = {
             'name': name,
             'private': True,
@@ -59,8 +67,12 @@ class Repository:
         if branch != 'main':
             sha = await self.branch.get_main(password, repo_name)
             await self.branch.create_branch(password, repo_name, branch, sha)
-            time.sleep(3)
-        repo = git.Repo.clone_from(remote, os.path.join(os_path, username) , branch=branch)
+        try:
+            repo = git.Repo.clone_from(remote, os.path.join(os_path, username) , branch=branch)
+        except:
+            logging.warning(f'Waiting 10 seconds before retrying to clone repo  {repo_name} to branch {branch}.')
+            time.sleep(10)
+            repo = git.Repo.clone_from(remote, os.path.join(os_path, username) , branch=branch)
         repo.config_writer().set_value("user", "name", username).release()
         repo.config_writer().set_value("user", "email", email).release()
         return repo
