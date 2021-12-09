@@ -28,6 +28,7 @@ async def mock(config_file: str, orgs: list = []):
 
 async def create_repos(config, org):
     r = Repository(org, config.filename) 
+    await r.delete_existing_repos()
     for repo_name in config.repo_names:
         await r.create(repo_name)
         logging.info(f'Created repository {repo_name} in org {org}.')
