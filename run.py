@@ -6,6 +6,7 @@ from src.actions import Actions
 from src.commit import Commit
 from src.members import Membership
 from src.pull_request import PullRequest
+from src.direct_permissions import DirectPermission
 
 async def mock(config_file: str, orgs: list = []):
     config = Config() if config_file is None else Config(config_file)
@@ -15,12 +16,14 @@ async def mock(config_file: str, orgs: list = []):
         await create_repos(config, org)
         logging.info('----- Setting up Actions configurations -----')
         await setup_actions(config, org)
-        logging.info('----- Creating Teams -----')
-        await create_teams(config, org)
         logging.info('----- Inviting Members -----')
         await invite_members(config, org)
         logging.info('----- Members accepting invitations -----')
         await accept_invitations(config, org)
+        logging.info('----- Creating Teams -----')
+        await create_teams(config, org)
+        logging.info('----- Granting Direct Permissions -----')
+        await add_direct_permissions(config, org)
         logging.info('----- Creating Commits and Pull Requests -----')
         await create_commits(config, org)
         logging.info('----- Merging Pull Requests -----')
@@ -56,6 +59,12 @@ async def accept_invitations(config, org):
         token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
         await m.accept_invitation_to_org(token)
         logging.info(f'The user {member["login"]} accepted the invitation to join {org}')
+
+async def add_direct_permissions(config, org):
+    dp = DirectPermission(org, config.filename)
+    for member in config.members:
+        await dp.add_repository_permission('GitGoat',member['login'],member['gitgoat_repo_permission'])
+        logging.info(f'The permission{member["gitgoat_repo_permission"]} is granted to user {member["login"]} in repo GitGoat in org {org}')
 
 async def setup_actions(config, org):
     a = Actions(org, config.filename)
