@@ -22,7 +22,7 @@ class Commit:
             self.repo.index.commit(commit_messages.pop(0), commit_date=timestamp, author_date=timestamp)
         try:
             self.origin.push()
-            logging.info(f'Successfully pushed code from {self.repo.common_dir}')
+            #logging.info(f'Successfully pushed code from {self.repo.common_dir}')
         except Exception:
             logging.warning(f'Unable to push code from {self.repo.common_dir}')
 

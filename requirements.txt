@@ -3,3 +3,4 @@ Faker
 requests
 pyyaml
 coloredlogs
+tqdm

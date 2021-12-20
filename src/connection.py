@@ -25,7 +25,7 @@ class ConnectionHandler:
     async def delete(self, endpoint):
         resp = requests.delete(self.base_url + endpoint, headers=self.headers, verify=False)
         if resp.status_code != 204:
-            logging.warning(f'The response code for the DELETE endpoint {endpoint} is {resp.status_code}. Message: {resp.text}')
+            logging.debug(f'The response code for the DELETE endpoint {endpoint} is {resp.status_code}. Message: {resp.text}')
             await self.__validate_rate_limit(resp)
             requests.delete(self.base_url + endpoint, headers=self.headers, verify=False)
     

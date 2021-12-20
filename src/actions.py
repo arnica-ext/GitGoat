@@ -1,3 +1,4 @@
+import logging
 from src.connection import ConnectionHandler
 
 class Actions:
