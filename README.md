@@ -28,7 +28,7 @@ To create a PAT, follow these steps:
 1. Go to the [new tokens page](https://github.com/settings/tokens/new "GitHub New Tokens Page"). If you are redirected to the login page, authenticate yourself.
 2. Fill the fields in the "New personal access token page" and then click on `Generate token`:
    * Set the `expiration` time as needed. Since it will be used only to execute GitGoat, a short expiration time is preferred.
-   * Select the following scopes: `repo`, `admin:org`, and `delete_repo`. 
+   * Select the following scopes: `repo`, `workflow`, `admin:org`, and `delete_repo`. 
 3. Make sure to copy your personal access token now. It will be required for the next step.
 
 ## Run a Docker Container
