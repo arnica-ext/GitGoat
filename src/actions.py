@@ -1,3 +1,4 @@
+import logging
 from src.connection import ConnectionHandler
 
 class Actions:
@@ -29,6 +30,7 @@ class Actions:
             'allowed_actions': allowed_actions
         }
         resp = await self.conn.put(self.repos_endpoint.replace('[REPO]', repo), json_data=data)
+        logging.info(f'Allowed {allowed_actions} actions in repo {repo}')
         return resp
     
 
