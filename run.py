@@ -32,6 +32,8 @@ async def create_repos(config, org):
     for repo_name in config.repo_names:
         await r.create(repo_name)
         logging.info(f'Created repository {repo_name} in org {org}.')
+    logging.info(f'Cloning GitGoat and pushing to org {org}.')
+    await r.clone_gitgoat()
     
 async def create_teams(config, org):
     t = Team(org, config.filename)
