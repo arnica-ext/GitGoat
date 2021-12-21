@@ -87,6 +87,7 @@ members:
     login: archiet-gg
     email: archiet@gitgoat.tools
     token: EbcLokhBwUKnN5WmJz6eOwiXN0sFC04UxDIs
+    gitgoat_repo_permission: admin
     member_of_groups:
       - Echinacea-admin
       - Echinacea-push
@@ -118,6 +119,7 @@ members:
     login: billdp-gg
     email: billdp@gitgoat.tools
     token: Nk6u8zQjI5o1CX9QWNuY4VOpmGIo452GEq2T
+    gitgoat_repo_permission: maintain
     member_of_groups:
       - Echinacea-push
       - Echinacea-pull
@@ -141,6 +143,7 @@ members:
     login: codeyf-gg
     email: codeyf@gitgoat.tools
     token: B81U7smn2ScvPp7nfDXj7RNpTBZvk90tYwiN
+    gitgoat_repo_permission: push
     member_of_groups:
       - Echinacea-pull
       - Lavender-push
@@ -170,6 +173,7 @@ members:
     login: debu-gg
     email: debu@gitgoat.tools
     token: NSWR5qmC4g9Cx8Y8yXzQE4kzUmBYWf16ZTsF
+    gitgoat_repo_permission: triage
     member_of_groups:
       - Echinacea-pull
       - Chamomile-pull
