@@ -1,6 +1,8 @@
-![license](https://img.shields.io/github/license/arnica-ext/GitGoat.svg)
-![Visitor](https://visitor-badge.laobi.icu/badge?page_id=arnica-ext.GitGoat)
-![example workflow](https://github.com/arnica-ext/GitGoat/actions/workflows/docker-image.yml/badge.svg)
+![license](https://badgen.net/github/license/arnica-ext/GitGoat)
+![visitors](https://visitor-badge.laobi.icu/badge?page_id=arnica-ext.GitGoat)
+![checks](https://badgen.net/github/checks/arnica-ext/GitGoat)
+![workflows](https://github.com/arnica-ext/GitGoat/actions/workflows/docker-image.yml/badge.svg)
+![dependabot](https://badgen.net/github/dependabot/arnica-ext/GitGoat)
 
 
 
