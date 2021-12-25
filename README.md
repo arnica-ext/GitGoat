@@ -1,3 +1,9 @@
+![license](https://img.shields.io/github/license/arnica-ext/GitGoat.svg)
+![Visitor](https://visitor-badge.laobi.icu/badge?page_id=arnica-ext.GitGoat)
+![example workflow](https://github.com/arnica-ext/GitGoat/actions/workflows/docker-image.yml/badge.svg)
+
+
+
 # About GitGoat for GitHub
 GitGoat enables DevOps and Engineering teams to test security products intending to integrate with GitHub.
 GitGoat is a learning and training project that demonstrates common configuration errors that can potentially allow adversaries to introduce code to production. 
@@ -5,7 +11,7 @@ GitGoat is a learning and training project that demonstrates common configuratio
 ![logo](images/gitgoat-logo.png)
 
 # Introduction
-GitGoat was built to enable DevOps and Engineering teams to design and implement a sustainable misconfiguration prevention strategy. It can be used for proof-of-concept projects, such as [OpenSSF](https://openssf.org "Open Source Security Foundation"), [Arnica](https://arnica.io) (coming soon), and others. 
+GitGoat was built to enable DevOps and Engineering teams to design and implement a sustainable misconfiguration prevention strategy. It can be used for proof-of-concept projects, such as [OpenSSF](https://openssf.org "Open Source Security Foundation"), [Arnica](https://arnica.io), and others. 
 
 ## Important note
 > Since GitGoat creates misconfigured assets on GitHub, it is warmly recommended to avoid using it in a production organization. 
