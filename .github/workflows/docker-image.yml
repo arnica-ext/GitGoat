@@ -3,8 +3,14 @@ name: Docker Image CI
 on:
   push:
     branches: [ main ]
+    paths-ignore: 
+      - 'README.md'
+      - 'images/**'
   pull_request:
     branches: [ main ]
+    paths-ignore: 
+      - 'README.md'
+      - 'images/**'
 
 env:
   REGISTRY: ghcr.io
