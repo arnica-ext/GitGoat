@@ -8,6 +8,7 @@ from src.commit import Commit
 from src.members import Membership
 from src.pull_request import PullRequest
 from src.direct_permissions import DirectPermission
+from src.branch import Branch
 
 async def mock(config_file: str, orgs: list = []):
     config = Config() if config_file is None else Config(config_file)
@@ -26,6 +27,8 @@ async def mock(config_file: str, orgs: list = []):
         await create_teams(config, org)
         logging.info('----- Granting Direct Permissions -----')
         await add_direct_permissions(config, org)
+        logging.info('----- Configuring Branch Protection -----')
+        await configure_branch_protection(config, org)
         logging.info('----- Creating Commits and Pull Requests -----')
         await create_commits(config, org)
         logging.info('----- Merging Pull Requests -----')
@@ -89,6 +92,16 @@ async def setup_actions(config, org):
         if config.repo_configs[actions_enabled_repo]['allowed_actions'] == 'selected':
             await a.enable_selected_actions_in_repo(actions_enabled_repo, verified_allowed=config.repo_configs[actions_enabled_repo]['verified_allowed_actions'])
 
+async def configure_branch_protection(config, org):
+    b = Branch(org, config.filename)
+    for repo_name in tqdm(config.repo_names, desc='Branch Protection'):
+        if 'branch_protection_restirctions' in config.repo_configs[repo_name]:
+            users = config.repo_configs[repo_name]['branch_protection_restirctions']['users']
+            teams = []
+            for team_postfix in config.repo_configs[repo_name]['branch_protection_restirctions']['teams']:
+                teams.append(f'{repo_name}-{team_postfix}')
+            await b.set_branch_protection(repo_name, 'main', users, teams)
+
 async def create_commits(config, org):
     r = Repository(org, config.filename)
     pr = PullRequest(org, config.filename)
@@ -97,23 +110,41 @@ async def create_commits(config, org):
             token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
             repo = await r.clone(commit_details['repo'], member['login'], token, member['email'], commit_details['branch'])
             c = Commit(repo)
-            c.generate_commits(200, commit_details['days'])
+            c.generate_commits(50, commit_details['days'])
             if commit_details['create_pr']:
                 await pr.create_pull_request(token, commit_details['repo'], commit_details['branch'])
                 #logging.info(f'Created a PR by {member["login"]} from branch {commit_details["branch"]}')
 
 async def merge_pull_requests(config, org):
     pr = PullRequest(org, config.filename)
+    reviewed_prs = {}
     for member in tqdm(config.members, desc=f'Member PRs'):
         for repo in config.repo_names:
-            if f'{repo}-triage' in member['member_of_groups'] or f'{repo}-maintain' in member['member_of_groups']:
+            reviewed_prs[repo] = []
+            if is_member_allowed_to_merge(config, member, repo):
                 token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
                 prs = await pr.get_pull_requests(token,repo)
                 for p in prs:
-                    merged = await pr.merge(token, repo, p)
-                    if not merged: 
-                        logging.warning(f'Did NOT merge the PR id {p} in repository {repo} by {member["login"]}')
+                    if prs[p] != member['login']:
+                        await pr.review(token, repo, p)
+                        reviewed_prs[repo].append(p)
+                    if p in reviewed_prs[repo]:
+                        merged = await pr.merge(token, repo, p)
+                        if not merged: 
+                            logging.warning(f'Did NOT merge the PR id {p} in repository {repo} by {member["login"]}')
 
+def is_member_allowed_to_merge(config, member, repo):
+    if 'branch_protection_restirctions' in config.repo_configs[repo]:
+        if member['login'] in config.repo_configs[repo]['branch_protection_restirctions']['users']:
+            return True
+        for team in config.repo_configs[repo]['branch_protection_restirctions']['teams']:
+            for group_membership in member['member_of_groups']:
+                if group_membership == f'{repo}-{team}':
+                    return True
+    else:
+        if f'{repo}-maintain' in member['member_of_groups'] or f'{repo}-push' in member['member_of_groups']:
+            return True
+    return False
 
 if __name__ == '__main__':
     try:

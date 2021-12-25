@@ -11,11 +11,11 @@ class PullRequest:
     async def get_pull_requests(self, pat, repository):
         conn = ConnectionHandler(pat, self.config_file)
         endpoint = self.endpoint.replace('[REPO]', repository)
-        pr_ids = []
+        pr_ids = {}
         resp = await conn.get(endpoint)
         for pr in resp:
             if pr['state'] == 'open': 
-                pr_ids.append(pr['number'])
+                pr_ids[pr['number']] = pr['user']['login']
         return pr_ids
 
     async def create_pull_request(self, pat, repository, head_branch):
@@ -30,6 +30,16 @@ class PullRequest:
         resp = await conn.post(endpoint, json_data=data)
         return resp['number']
       
+    async def review(self, pat, repository, pull_request_number):
+        conn = ConnectionHandler(pat, self.config_file)
+        endpoint = self.endpoint.replace('[REPO]', repository) + f'/{str(pull_request_number)}/reviews'
+        data = {
+            'event': 'APPROVE',
+            'body:': self.fake.lexify(text='GitGoat automated PR review ????????')
+        }
+        resp = await conn.post(endpoint, data)
+        return resp
+
     async def merge(self, pat, repository, pull_request_number):
         conn = ConnectionHandler(pat, self.config_file)
         endpoint = self.endpoint.replace('[REPO]', repository) + f'/{str(pull_request_number)}/merge'

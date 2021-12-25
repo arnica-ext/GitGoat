@@ -23,6 +23,7 @@ repo_names:
 
 ## Specific configurations per repo (optional).
 ### "branch_protection" means the policy is enabled in the main branch
+### "branch_protection_restirctions" define who can push to the protected branch. A team name is specified by the prefix, e.g. the team "Lavender-push" should be included as "push".
 ### "actions_enabled" means that the repo has GitHub Action enabled
 ### "allowed_actions" defines the scope of the allowed actions. The options are "all", "selected" or "local_only". It is applicable only if "actions_enabled" is true.
 ### "verified_allowed_actions" defined if verified actions (not neccesarily owned by GitHub) are allowed. It is applicable only if "actions_enabled" is true.
@@ -33,6 +34,9 @@ repo_configs:
     allowed_actions: all
   Lavender:
     branch_protection: True
+    branch_protection_restirctions:
+      users: [] 
+      teams: ['push']
     actions_enabled: True
     allowed_actions: selected
     verified_allowed_actions: False
@@ -43,6 +47,9 @@ repo_configs:
     verified_allowed_actions: True
   Calendula:
     branch_protection: True
+    branch_protection_restirctions:
+      users: [] 
+      teams: ['push']
     actions_enabled: False
   Tarragon:
     branch_protection: False
