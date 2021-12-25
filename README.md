@@ -77,7 +77,7 @@ In case you'd like to rant and rave about the tokens in this file, these account
 ## Validate the results
 If everything went well, you should see the following in your newly created organization:
 * 5 new repositories named Echinacea, Lavender, Chamomile, Calendula, Tarragon (we like the herbs theme).
-* Many teams with the naming convention [repository_name]-[admin | maintain | triage | push | pull]. Each team has a specific permission to the associated repository.
+* Many teams with the naming convention [repository_name]-[admin/maintain/triage/push/pull]. Each team has a specific permission to the associated repository.
 * 4 users named archie-gg (a.k.a. Archie Tekkt), billdp-gg (a.k.a. Bill De Pipeline), codeyf-gg (a.k.a. Codey Fie) and debu-gg (a.k.a. Deb Ugeen) as members in the organization and the teams. 
 * Many commits by the users in the last 12 months. Keep in mind that the commit dates are vary, but there is only a single push by every user to the relevant repository.
 
