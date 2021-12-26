@@ -10,4 +10,6 @@ relative_links:
 include:
   - README.md
 
+google_analytics: UA-210328150-4
+
 theme: jekyll-theme-slate
