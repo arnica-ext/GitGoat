@@ -9,6 +9,7 @@ from src.members import Membership
 from src.pull_request import PullRequest
 from src.direct_permissions import DirectPermission
 from src.branch import Branch
+from src.codeowners import CodeOwners
 
 async def mock(config_file: str, orgs: list = []):
     config = Config() if config_file is None else Config(config_file)
@@ -29,8 +30,12 @@ async def mock(config_file: str, orgs: list = []):
         await add_direct_permissions(config, org)
         logging.info('----- Configuring Branch Protection -----')
         await configure_branch_protection(config, org)
+        logging.info('----- Configuring CODEOWNERS -----')
+        await configure_codeowners(config, org)
         logging.info('----- Creating Commits and Pull Requests -----')
         await create_commits(config, org)
+        logging.info('----- Reviewing Pull Requests -----')
+        await review_pull_requests(config, org)
         logging.info('----- Merging Pull Requests -----')
         await merge_pull_requests(config, org)
 
@@ -92,6 +97,14 @@ async def setup_actions(config, org):
         if config.repo_configs[actions_enabled_repo]['allowed_actions'] == 'selected':
             await a.enable_selected_actions_in_repo(actions_enabled_repo, verified_allowed=config.repo_configs[actions_enabled_repo]['verified_allowed_actions'])
 
+async def configure_codeowners(config, org):
+    r = Repository(org, config.filename)
+    for repo_name in tqdm(config.repo_names, desc='CODEOWNERS'):
+        repo = await r.clone(repo_name, 'GitGoat', Config.get_pat(), 'GitGoat@gitgoat.tools')
+        co = CodeOwners(repo_name, repo, config.filename)
+        filename = await co.generate_file()
+        await co.push_file(filename)
+
 async def configure_branch_protection(config, org):
     b = Branch(org, config.filename)
     for repo_name in tqdm(config.repo_names, desc='Branch Protection'):
@@ -100,7 +113,9 @@ async def configure_branch_protection(config, org):
             teams = []
             for team_postfix in config.repo_configs[repo_name]['branch_protection_restirctions']['teams']:
                 teams.append(f'{repo_name}-{team_postfix}')
-            await b.set_branch_protection(repo_name, 'main', users, teams)
+            enforce_admins = config.repo_configs[repo_name]['branch_protection_restirctions']['enforce_admins']
+            require_code_owner_reviews = config.repo_configs[repo_name]['branch_protection_restirctions']['require_code_owner_reviews']
+            await b.set_branch_protection(repo_name, 'main', enforce_admins, require_code_owner_reviews, users, teams)
 
 async def create_commits(config, org):
     r = Repository(org, config.filename)
@@ -115,23 +130,42 @@ async def create_commits(config, org):
                 await pr.create_pull_request(token, commit_details['repo'], commit_details['branch'])
                 #logging.info(f'Created a PR by {member["login"]} from branch {commit_details["branch"]}')
 
-async def merge_pull_requests(config, org):
+async def review_pull_requests(config, org):
     pr = PullRequest(org, config.filename)
-    reviewed_prs = {}
-    for member in tqdm(config.members, desc=f'Member PRs'):
+    for member in tqdm(config.members, desc=f'Members Reviewing PRs'):
         for repo in config.repo_names:
-            reviewed_prs[repo] = []
-            if is_member_allowed_to_merge(config, member, repo):
-                token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
+            token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
+            if is_member_allowed_to_review(config, member, repo):
                 prs = await pr.get_pull_requests(token,repo)
                 for p in prs:
                     if prs[p] != member['login']:
                         await pr.review(token, repo, p)
-                        reviewed_prs[repo].append(p)
-                    if p in reviewed_prs[repo]:
-                        merged = await pr.merge(token, repo, p)
-                        if not merged: 
-                            logging.warning(f'Did NOT merge the PR id {p} in repository {repo} by {member["login"]}')
+
+async def merge_pull_requests(config, org):
+    pr = PullRequest(org, config.filename)
+    for member in tqdm(config.members, desc=f'Members Merging PRs'):
+        for repo in config.repo_names:
+            token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
+            if is_member_allowed_to_merge(config, member, repo):
+                prs = await pr.get_pull_requests(token,repo)
+                for p in prs:
+                    merged = await pr.merge(token, repo, p)
+                    if not merged: 
+                        logging.warning(f'Did NOT merge the PR id {p} in repository {repo} by {member["login"]}')
+
+def is_member_allowed_to_review(config, member, repo):
+    if 'branch_protection_restirctions' in config.repo_configs[repo] and 'require_code_owner_reviews' in config.repo_configs[repo]['branch_protection_restirctions'] and not config.repo_configs[repo]['branch_protection_restirctions']['require_code_owner_reviews']:
+        return True
+    if 'codeowners' in config.repo_configs[repo] and 'owners' in config.repo_configs[repo]['codeowners']:
+        for owner in config.repo_configs[repo]['codeowners']['owners']:
+            for u in owner['users']:
+                if u == member:
+                    return True
+            for t in owner['teams']:
+                for m in config.members:
+                    if m['login'] == member['login'] and f'{repo}-{t}' in m['member_of_groups']:
+                        return True
+    return False
 
 def is_member_allowed_to_merge(config, member, repo):
     if 'branch_protection_restirctions' in config.repo_configs[repo]:

@@ -24,6 +24,7 @@ repo_names:
 ## Specific configurations per repo (optional).
 ### "branch_protection" means the policy is enabled in the main branch
 ### "branch_protection_restirctions" define who can push to the protected branch. A team name is specified by the prefix, e.g. the team "Lavender-push" should be included as "push".
+### "codeowners" configure the codeowners file definitions. The possible paths are '' (root), './github'. or '/docs'. The patterns and users/teams associations are in the codeowners documentations on GitHub, but the name of the teams should include only the postfixes (as explained above).
 ### "actions_enabled" means that the repo has GitHub Action enabled
 ### "allowed_actions" defines the scope of the allowed actions. The options are "all", "selected" or "local_only". It is applicable only if "actions_enabled" is true.
 ### "verified_allowed_actions" defined if verified actions (not neccesarily owned by GitHub) are allowed. It is applicable only if "actions_enabled" is true.
@@ -32,11 +33,30 @@ repo_configs:
     branch_protection: False
     actions_enabled: True
     allowed_actions: all
+    codeowners:
+      path: ''
+      owners:
+        - pattern: '*'
+          users:
+            - miker-gg
+          teams:
+            - push
   Lavender:
     branch_protection: True
     branch_protection_restirctions:
       users: [] 
-      teams: ['push']
+      teams: 
+        - push
+      enforce_admins: False
+      require_code_owner_reviews: True
+    codeowners:
+      path: docs/
+      owners:
+        - pattern: '*'
+          users:
+            - archiet-gg
+          teams:
+            - push
     actions_enabled: True
     allowed_actions: selected
     verified_allowed_actions: False
@@ -49,7 +69,10 @@ repo_configs:
     branch_protection: True
     branch_protection_restirctions:
       users: [] 
-      teams: ['push']
+      teams:
+        - push
+      enforce_admins: True
+      require_code_owner_reviews: False
     actions_enabled: False
   Tarragon:
     branch_protection: False
@@ -90,6 +113,19 @@ teams:
 ### To control group membership, add the list of groups under 'member_of_groups'
 ### More granular details are in the 'days_since_last_commit' section, which represent how commits and pull requests will be executed. 
 members:
+  - member_id: 90474231
+    login: miker-gg
+    email: miker@@gitgoat.tools
+    token: xA6DOQRPkmo6wuP5GUfSJCl6u7H3si2a6AFc
+    gitgoat_repo_permission: push
+    member_of_groups:
+      - Lavender-push
+      - Calendula-triage
+      - Chamomile-push
+      - Echinacea-pull
+      - Calendula-push
+
+    days_since_last_commit: []
   - member_id: 90470369
     login: archiet-gg
     email: archiet@gitgoat.tools

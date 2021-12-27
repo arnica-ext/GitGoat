@@ -23,7 +23,7 @@ class Branch:
         resp = await conn.post(endpoint, json_data=data)
         return resp
     
-    async def set_branch_protection(self, repository, branch_name, restricted_users = [], restricted_teams = []):
+    async def set_branch_protection(self, repository, branch_name, enforce_admins = False, require_code_owner_reviews = False, restricted_users = [], restricted_teams = []):
         conn = ConnectionHandler(config_file=self.config_file)
         endpoint = self.branch_protection_endpoint.replace('[REPO]',repository).replace('[BRANCH]', branch_name)
         payload = {
@@ -31,10 +31,10 @@ class Branch:
                 'strict': False,
                 'contexts': []
             },
-            'enforce_admins': False,
-            'require_code_owner_reviews': False,
+            'enforce_admins': enforce_admins,
             'required_pull_request_reviews': {
-                'required_approving_review_count': 1
+                'required_approving_review_count': 1,
+                'require_code_owner_reviews': require_code_owner_reviews
             },
             'restrictions': {
                 'users': restricted_users,
