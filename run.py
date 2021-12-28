@@ -44,7 +44,6 @@ async def create_repos(config, org):
     await r.delete_existing_repos()
     for repo_name in tqdm(config.repo_names, desc='Repos'):
         await r.create(repo_name)
-        #logging.info(f'Created repository {repo_name} in org {org}.')
     logging.info(f'Cloning GitGoat and pushing to org {org}.')
     await r.clone_gitgoat()
     
@@ -54,7 +53,6 @@ async def create_teams(config, org):
         for gp in repo['group_postfixes']:
             await t.create(f'{repo["repo"]}-{gp}', [f'{org}/{repo["repo"]}'])
             await t.add_repository_permission(f'{repo["repo"]}-{gp}', f'{org}/{repo["repo"]}', gp)
-            #logging.info(f'Created the team {repo["repo"]}-{gp} and added the permission {gp} to repo {org}/{repo["repo"]}')
             for member in config.members:
                 if (f'{repo["repo"]}-{gp}' in member['member_of_groups']):
                     await t.add_member(f'{repo["repo"]}-{gp}',member['login'])
@@ -68,14 +66,12 @@ async def accept_invitations(config, org):
     for member in tqdm(config.members, desc='Members'):
         token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
         await m.accept_invitation_to_org(token)
-        #logging.info(f'The user {member["login"]} accepted the invitation to join {org}')
 
 async def add_direct_permissions(config, org):
     dp = DirectPermission(org, config.filename)
     for member in tqdm(config.members, desc='Direct Permission'):
         if 'gitgoat_repo_permission' in member:
             await dp.add_repository_permission('GitGoat',member['login'],member['gitgoat_repo_permission'])
-            #logging.info(f'The permission{member["gitgoat_repo_permission"]} is granted to user {member["login"]} in repo GitGoat in org {org}')
 
 async def setup_actions(config, org):
     a = Actions(org, config.filename)
@@ -101,7 +97,7 @@ async def configure_codeowners(config, org):
     r = Repository(org, config.filename)
     for repo_name in tqdm(config.repo_names, desc='CODEOWNERS'):
         repo = await r.clone(repo_name, 'GitGoat', Config.get_pat(), 'GitGoat@gitgoat.tools')
-        co = CodeOwners(repo_name, repo, config.filename)
+        co = CodeOwners(org,repo_name, repo, config.filename)
         filename = await co.generate_file()
         await co.push_file(filename)
 
@@ -121,29 +117,53 @@ async def create_commits(config, org):
     r = Repository(org, config.filename)
     pr = PullRequest(org, config.filename)
     for member in config.members:
+        token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
         for commit_details in tqdm(member['days_since_last_commit'], desc=f'Commits for {member["login"]}'):
-            token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
             repo = await r.clone(commit_details['repo'], member['login'], token, member['email'], commit_details['branch'])
             c = Commit(repo)
-            c.generate_commits(50, commit_details['days'])
+            c.generate_commits(25, commit_details['days'])
             if commit_details['create_pr']:
                 await pr.create_pull_request(token, commit_details['repo'], commit_details['branch'])
-                #logging.info(f'Created a PR by {member["login"]} from branch {commit_details["branch"]}')
 
 async def review_pull_requests(config, org):
     pr = PullRequest(org, config.filename)
-    for member in tqdm(config.members, desc=f'Members Reviewing PRs'):
+    pr_reviews_map = await get_pr_reviews_map(pr, config)
+    for member in tqdm(config.members, desc=f'Members Review PRs'):
+        token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
         for repo in config.repo_names:
-            token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
-            if is_member_allowed_to_review(config, member, repo):
-                prs = await pr.get_pull_requests(token,repo)
+            member_reviewed_prs_of_login = []
+            prs = await pr.get_pull_requests(token,repo)
+            if is_member_codeowner(config, member, repo):
                 for p in prs:
-                    if prs[p] != member['login']:
+                    if prs[p] != member['login'] and prs[p] not in member_reviewed_prs_of_login and not pr_reviews_map[repo][p]:
                         await pr.review(token, repo, p)
+                        pr_reviews_map[repo][p] = True
+                        member_reviewed_prs_of_login.append(prs[p])
+            elif can_members_review(config, repo):
+                for p in prs:
+                    if prs[p] != member['login'] and not pr_reviews_map[repo][p]:
+                        await pr.review(token, repo, p)
+                        pr_reviews_map[repo][p] = True
+                        member_reviewed_prs_of_login.append(prs[p])
+    await review_pull_requests_by_owner(pr_reviews_map, pr)
+
+async def review_pull_requests_by_owner(pr_reviews_map, pr):
+    for repo in tqdm(pr_reviews_map, desc=f'Owner Reviews PRs'):
+        for pr_id in pr_reviews_map[repo]:
+            if not pr_reviews_map[repo][pr_id]:
+                await pr.review(Config.get_pat(), repo, pr_id)
+
+async def get_pr_reviews_map(pr, config):
+    pr_reviews_map = {}
+    for repo in config.repo_names:
+        pr_reviews_map[repo] = {}
+        for pr_id in await pr.get_pull_requests(Config.get_pat(),repo):
+            pr_reviews_map[repo][pr_id] = False
+    return pr_reviews_map
 
 async def merge_pull_requests(config, org):
     pr = PullRequest(org, config.filename)
-    for member in tqdm(config.members, desc=f'Members Merging PRs'):
+    for member in tqdm(config.members, desc=f'Members Merge PRs'):
         for repo in config.repo_names:
             token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
             if is_member_allowed_to_merge(config, member, repo):
@@ -153,9 +173,12 @@ async def merge_pull_requests(config, org):
                     if not merged: 
                         logging.warning(f'Did NOT merge the PR id {p} in repository {repo} by {member["login"]}')
 
-def is_member_allowed_to_review(config, member, repo):
+def can_members_review(config, repo):
     if 'branch_protection_restirctions' in config.repo_configs[repo] and 'require_code_owner_reviews' in config.repo_configs[repo]['branch_protection_restirctions'] and not config.repo_configs[repo]['branch_protection_restirctions']['require_code_owner_reviews']:
         return True
+    return False
+
+def is_member_codeowner(config, member, repo):
     if 'codeowners' in config.repo_configs[repo] and 'owners' in config.repo_configs[repo]['codeowners']:
         for owner in config.repo_configs[repo]['codeowners']['owners']:
             for u in owner['users']:

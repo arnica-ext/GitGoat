@@ -15,7 +15,7 @@ class PullRequest:
         resp = await conn.get(endpoint)
         for pr in resp:
             if pr['state'] == 'open': 
-                pr_ids[pr['number']] = pr['user']['login']
+                pr_ids[str(pr['number'])] = pr['user']['login']
         return pr_ids
 
     async def create_pull_request(self, pat, repository, head_branch):
