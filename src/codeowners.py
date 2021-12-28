@@ -7,8 +7,9 @@ class CodeOwners:
     
     filename = 'CODEOWNERS'
 
-    def __init__(self, repo_name: str, repository: git.Repo, config_file = None):
+    def __init__(self, organization: str, repo_name: str, repository: git.Repo, config_file = None):
         self.config = Config() if config_file is None else Config(config_file)
+        self.org = organization
         self.repo = repository
         self.repo_name = repo_name
         self.repo.git.add(update=True)
@@ -35,7 +36,7 @@ class CodeOwners:
             for u in owner['users']:
                 rules += f'@{u} '
             for t in owner['teams']:
-                rules += f'@{self.repo_name}-{t} '
+                rules += f'@{self.org}/{self.repo_name}-{t} '
             rules += '\n' 
         with open(filename, 'w') as f:
                 f.write(rules)

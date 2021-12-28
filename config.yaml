@@ -124,7 +124,6 @@ members:
       - Chamomile-push
       - Echinacea-pull
       - Calendula-push
-
     days_since_last_commit: []
   - member_id: 90470369
     login: archiet-gg
@@ -149,7 +148,7 @@ members:
       - repo: Lavender
         days: 14
         branch: feature_L01
-        create_pr: True
+        create_pr: False
       - repo: Chamomile
         days: 0
         branch: feature_C01
@@ -180,7 +179,11 @@ members:
         create_pr: False
       - repo: Lavender
         days: 5
-        branch: feature_L02
+        branch: feature_L02a
+        create_pr: True
+      - repo: Lavender
+        days: 20
+        branch: feature_L02b
         create_pr: True
   - member_id: 90473779
     login: codeyf-gg
@@ -202,7 +205,11 @@ members:
         create_pr: True
       - repo: Chamomile
         days: 0
-        branch: feature_C03
+        branch: feature_C03a
+        create_pr: True
+      - repo: Chamomile
+        days: 14
+        branch: feature_C03b
         create_pr: True
       - repo: Calendula
         days: 95

@@ -13,7 +13,7 @@ class Team:
         data = {
             'name': name,
             'repo_names': repo_names,
-            'privacy': 'secret'
+            'privacy': 'closed'
         }
         resp = await self.conn.post(self.endpoint, json_data=data)
         return resp
