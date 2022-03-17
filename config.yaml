@@ -11,7 +11,8 @@ base_headers:
 
 ## Organization names to run GitGoat on.
 org_names:
-  - GitGoat-Org
+  - GitGoat-Demo
+  
 
 ## Repo names to generate
 repo_names:
@@ -20,6 +21,8 @@ repo_names:
   - Chamomile
   - Calendula
   - Tarragon
+  - Ginger
+  - Wasabi
 
 ## Specific configurations per repo (optional).
 ### "branch_protection" means the policy is enabled in the main branch
@@ -29,6 +32,11 @@ repo_names:
 ### "allowed_actions" defines the scope of the allowed actions. The options are "all", "selected" or "local_only". It is applicable only if "actions_enabled" is true.
 ### "verified_allowed_actions" defined if verified actions (not neccesarily owned by GitHub) are allowed. It is applicable only if "actions_enabled" is true.
 repo_configs:
+  Wasabi:
+    branch_protection: True
+    actions_enabled: True
+    allowed_actions: all
+    verified_allowed_actions: False
   Echinacea:
     branch_protection: False
     actions_enabled: True
@@ -53,10 +61,34 @@ repo_configs:
       path: docs/
       owners:
         - pattern: '*'
-          users:
-            - archiet-gg
           teams:
             - push
+        - pattern: 'abc/'
+          users:
+            - archiet-gg
+            - miker-gg
+    actions_enabled: True
+    allowed_actions: selected
+    verified_allowed_actions: False
+  Ginger:
+    branch_protection: True
+    branch_protection_restirctions:
+      users:
+        - miker-gg
+        - codeyf-gg 
+      teams: []
+      enforce_admins: False
+      require_code_owner_reviews: True
+    codeowners:
+      path: docs/
+      owners:
+        - pattern: '*'
+          teams:
+            - push
+        - pattern: 'abc/'
+          users:
+            - archiet-gg
+            - miker-gg
     actions_enabled: True
     allowed_actions: selected
     verified_allowed_actions: False
@@ -80,6 +112,11 @@ repo_configs:
 
 ## Teams are constructed in the code as [repo]-[group_postfix]
 teams:
+  - repo: Wasabi
+    group_postfixes:
+      - admin
+      - push
+      - pull
   - repo: Echinacea
     group_postfixes:
       - admin
@@ -105,6 +142,10 @@ teams:
     group_postfixes:
       - pull
       - push
+  - repo: Ginger
+    group_postfixes:
+      - pull
+      - push
 
 ## Members detailed information.
 ### The member_id can be retrieved by queriying https://api.github.com/users/[login]. It is required as a parameter to invite and accept the invitations to the organization.
@@ -123,7 +164,10 @@ members:
       - Calendula-triage
       - Chamomile-push
       - Echinacea-pull
+      - Echinacea-push
       - Calendula-push
+      - Ginger-push
+      - Wasabi-push
     days_since_last_commit: []
   - member_id: 90470369
     login: archiet-gg
@@ -140,6 +184,8 @@ members:
       - Chamomile-pull
       - Chamomile-push
       - Tarragon-push
+      - Ginger-push
+      - Wasabi-push
     days_since_last_commit:
       - repo: Echinacea
         days: 91
@@ -157,6 +203,14 @@ members:
         days: 102
         branch: main
         create_pr: False
+      - repo: Ginger
+        days: 100
+        branch: feature_G01
+        create_pr: True
+      - repo: Wasabi
+        days: 25
+        branch: feature_W01
+        create_pr: True
   - member_id: 90471042
     login: billdp-gg
     email: billdp@gitgoat.tools
@@ -172,6 +226,8 @@ members:
       - Chamomile-pull
       - Calendula-pull
       - Tarragon-pull
+      - Ginger-push
+      - Wasabi-push
     days_since_last_commit:
       - repo: Echinacea
         days: 120
@@ -184,6 +240,14 @@ members:
       - repo: Lavender
         days: 20
         branch: feature_L02b
+        create_pr: True
+      - repo: Ginger
+        days: 29
+        branch: feature_G02
+        create_pr: True
+      - repo: Wasabi
+        days: 25
+        branch: feature_W02
         create_pr: True
   - member_id: 90473779
     login: codeyf-gg
@@ -198,6 +262,8 @@ members:
       - Chamomile-push
       - Calendula-push
       - Tarragon-push
+      - Ginger-push
+      - Wasabi-push
     days_since_last_commit:
       - repo: Lavender
         days: 101
@@ -219,6 +285,14 @@ members:
         days: 93
         branch: main
         create_pr: False
+      - repo: Ginger
+        days: 100
+        branch: feature_G03
+        create_pr: True
+      - repo: Wasabi
+        days: 25
+        branch: feature_W03
+        create_pr: True
   - member_id: 90473997
     login: debu-gg
     email: debu@gitgoat.tools

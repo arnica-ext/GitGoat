@@ -33,10 +33,12 @@ class CodeOwners:
         rules = ''
         for owner in self.config.repo_configs[self.repo_name]['codeowners']['owners']:
             rules += f'{owner["pattern"]}\t'
-            for u in owner['users']:
-                rules += f'@{u} '
-            for t in owner['teams']:
-                rules += f'@{self.org}/{self.repo_name}-{t} '
+            if 'users' in owner:
+                for u in owner['users']:
+                    rules += f'@{u} '
+            if 'teams' in owner:
+                for t in owner['teams']:
+                    rules += f'@{self.org}/{self.repo_name}-{t} '
             rules += '\n' 
         with open(filename, 'w') as f:
                 f.write(rules)
