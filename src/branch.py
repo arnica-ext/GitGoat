@@ -36,17 +36,17 @@ class Branch:
                 'required_approving_review_count': 1,
                 'require_code_owner_reviews': require_code_owner_reviews
             },
-            'restrictions': {
-                'users': restricted_users,
-                'teams': restricted_teams
-            },
             'allow_force_pushes': True,
             'allow_deletions': True,
-            'bypass_pull_request_allowances': {
+            'restrictions': None
+        }
+        if len(restricted_users) > 0 or len(restricted_teams) > 0:
+            identities_payload = {
                 'users': restricted_users,
                 'teams': restricted_teams
             }
-        }
+            payload['restrictions'] = identities_payload
+            payload['bypass_pull_request_allowances'] = identities_payload
         resp = await conn.put(endpoint, payload)
         return resp
       

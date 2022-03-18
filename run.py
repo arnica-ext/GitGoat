@@ -28,16 +28,16 @@ async def mock(config_file: str, orgs: list = []):
         await create_teams(config, org)
         logging.info('----- Granting Direct Permissions -----')
         await add_direct_permissions(config, org)
-        logging.info('----- Configuring Branch Protection -----')
-        await configure_branch_protection(config, org)
-        logging.info('----- Configuring CODEOWNERS -----')
-        await configure_codeowners(config, org)
         logging.info('----- Creating Commits and Pull Requests -----')
         await create_commits(config, org)
         logging.info('----- Reviewing Pull Requests -----')
         await review_pull_requests(config, org)
         logging.info('----- Merging Pull Requests -----')
         await merge_pull_requests(config, org)
+        logging.info('----- Configuring Branch Protection -----')
+        await configure_branch_protection(config, org)
+        logging.info('----- Configuring CODEOWNERS -----')
+        await configure_codeowners(config, org)
 
 async def create_repos(config, org):
     r = Repository(org, config.filename) 
@@ -49,13 +49,14 @@ async def create_repos(config, org):
     
 async def create_teams(config, org):
     t = Team(org, config.filename)
+    await t.delete()
     for repo in tqdm(config.teams, desc='Teams'):
         for gp in repo['group_postfixes']:
-            await t.create(f'{repo["repo"]}-{gp}', [f'{org}/{repo["repo"]}'])
-            await t.add_repository_permission(f'{repo["repo"]}-{gp}', f'{org}/{repo["repo"]}', gp)
+            team_slug = await t.create(f'{repo["repo"]}-{gp}', [f'{org}/{repo["repo"]}'])
+            await t.add_repository_permission(team_slug, f'{org}/{repo["repo"]}', gp)
             for member in config.members:
                 if (f'{repo["repo"]}-{gp}' in member['member_of_groups']):
-                    await t.add_member(f'{repo["repo"]}-{gp}',member['login'])
+                    await t.add_member(team_slug,member['login'])
 
 async def invite_members(config, org):
     m = Membership(org, config.filename)
@@ -181,13 +182,15 @@ def can_members_review(config, repo):
 def is_member_codeowner(config, member, repo):
     if 'codeowners' in config.repo_configs[repo] and 'owners' in config.repo_configs[repo]['codeowners']:
         for owner in config.repo_configs[repo]['codeowners']['owners']:
-            for u in owner['users']:
-                if u == member:
-                    return True
-            for t in owner['teams']:
-                for m in config.members:
-                    if m['login'] == member['login'] and f'{repo}-{t}' in m['member_of_groups']:
+            if 'users' in owner:
+                for u in owner['users']:
+                    if u == member:
                         return True
+            if 'teams' in owner:
+                for t in owner['teams']:
+                    for m in config.members:
+                        if m['login'] == member['login'] and f'{repo}-{t}' in m['member_of_groups']:
+                            return True
     return False
 
 def is_member_allowed_to_merge(config, member, repo):

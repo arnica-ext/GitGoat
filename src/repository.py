@@ -71,7 +71,7 @@ class Repository:
         try: 
             if branch != 'main':
                 sha = await self.branch.get_main(password, repo_name)
-                await self.branch.create_branch(password, repo_name, branch, sha)
+                create_branch = await self.branch.create_branch(password, repo_name, branch, sha)
             if not retry:
                 repo = git.Repo.clone_from(remote, os.path.join(os_path, username) , branch=branch)
             else:

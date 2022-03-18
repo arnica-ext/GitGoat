@@ -9,14 +9,13 @@ class Team:
         self.conn = ConnectionHandler(config_file=config_file)
 
     async def create(self, name, repo_names = []):
-        await self.delete(name)
         data = {
             'name': name,
             'repo_names': repo_names,
             'privacy': 'closed'
         }
         resp = await self.conn.post(self.endpoint, json_data=data)
-        return resp
+        return resp['slug']
     
     async def add_member(self, team_name, member):
         endpoint = f'/orgs/{self.org}/teams/{team_name}/memberships/{member}'
@@ -35,5 +34,7 @@ class Team:
         resp = await self.conn.put(endpoint, data)
         return resp
         
-    async def delete(self, name):
-        await self.conn.delete(f'/orgs/{self.org}/teams/{name}')
+    async def delete(self):
+        teams = await self.conn.get(f'/orgs/{self.org}/teams')
+        for team in teams:
+            await self.conn.delete(f'/orgs/{self.org}/teams/{team["slug"]}')
