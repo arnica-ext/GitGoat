@@ -1,4 +1,3 @@
-from build import logging
 from src.connection import ConnectionHandler
 
 class Branch:
@@ -48,8 +47,6 @@ class Branch:
             }
             payload['restrictions'] = identities_payload
             payload['bypass_pull_request_allowances'] = identities_payload
-        else:
-            logging.info(f'No users and teams are defined in the repository {repository}')
         resp = await conn.put(endpoint, payload)
         return resp
       
