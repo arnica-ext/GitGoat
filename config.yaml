@@ -23,6 +23,7 @@ repo_names:
   - Tarragon
   - Ginger
   - Wasabi
+  - Peppermint
 
 ## Specific configurations per repo (optional).
 ### "branch_protection" means the policy is enabled in the main branch
@@ -34,6 +35,16 @@ repo_names:
 repo_configs:
   Wasabi:
     branch_protection: True
+    actions_enabled: True
+    allowed_actions: all
+    verified_allowed_actions: False
+  Peppermint:
+    branch_protection: True
+    branch_protection_restirctions:
+      users: [] 
+      teams: []
+      enforce_admins: False
+      require_code_owner_reviews: False
     actions_enabled: True
     allowed_actions: all
     verified_allowed_actions: False
@@ -146,6 +157,10 @@ teams:
     group_postfixes:
       - pull
       - push
+  - repo: Peppermint
+    group_postfixes:
+      - push
+
 
 ## Members detailed information.
 ### The member_id can be retrieved by queriying https://api.github.com/users/[login]. It is required as a parameter to invite and accept the invitations to the organization.
@@ -168,6 +183,7 @@ members:
       - Calendula-push
       - Ginger-push
       - Wasabi-push
+      - Peppermint-push
     days_since_last_commit: []
   - member_id: 90470369
     login: archiet-gg
@@ -186,6 +202,7 @@ members:
       - Tarragon-push
       - Ginger-push
       - Wasabi-push
+      - Peppermint-push
     days_since_last_commit:
       - repo: Echinacea
         days: 91
@@ -228,6 +245,7 @@ members:
       - Tarragon-pull
       - Ginger-push
       - Wasabi-push
+      - Peppermint-push
     days_since_last_commit:
       - repo: Echinacea
         days: 120
@@ -249,6 +267,10 @@ members:
         days: 25
         branch: feature_W02
         create_pr: True
+      - repo: Peppermint
+        days: 2
+        branch: feature_P01
+        create_pr: True
   - member_id: 90473779
     login: codeyf-gg
     email: codeyf@gitgoat.tools
@@ -264,6 +286,7 @@ members:
       - Tarragon-push
       - Ginger-push
       - Wasabi-push
+      - Peppermint-push
     days_since_last_commit:
       - repo: Lavender
         days: 101
@@ -292,6 +315,10 @@ members:
       - repo: Wasabi
         days: 25
         branch: feature_W03
+        create_pr: True
+      - repo: Peppermint
+        days: 23
+        branch: feature_P02
         create_pr: True
   - member_id: 90473997
     login: debu-gg
