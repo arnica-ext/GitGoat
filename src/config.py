@@ -16,6 +16,7 @@ class Config:
         self.repo_names = self.__obj['repo_names']
         self.repo_configs = self.__obj['repo_configs']
         self.teams = self.__obj['teams']
+        self.parent_teams = self.__obj['parent_teams']
         self.members = self.__obj['members']
 
     def get_pat():

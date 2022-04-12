@@ -157,9 +157,28 @@ teams:
     group_postfixes:
       - pull
       - push
+      - admin
   - repo: Peppermint
     group_postfixes:
       - push
+      - admin
+
+parent_teams:
+  - team: Herbs-push
+    repo_permissions:
+      Tarragon: push
+    children:
+      - Lavender-push
+  - team: Flowers-push
+    repo_permissions:
+      Peppermint: admin
+    children:
+      - Peppermint-push
+  - team: Daisies-push
+    repo_permissions:
+      Ginger: push
+    children:
+      - Ginger-admin
 
 
 ## Members detailed information.
