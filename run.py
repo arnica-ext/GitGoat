@@ -50,9 +50,23 @@ async def create_repos(config, org):
 async def create_teams(config, org):
     t = Team(org, config.filename)
     await t.delete()
+    parent_team_slug_map = {}
+    for parent_repo in tqdm(config.parent_teams, desc='Parent Teams'):
+        repos = [f'{org}/{repo}-{parent_repo["repo_permissions"][repo]}' for repo in parent_repo['repo_permissions']]
+        team_slug, team_id = await t.create(parent_repo['team'], repos)
+        parent_team_slug_map[parent_repo['team']] = team_id
+        for repo in parent_repo['repo_permissions']:
+            await t.add_repository_permission(team_slug, f'{org}/{repo}', parent_repo['repo_permissions'][repo])
+        for member in config.members:
+            if (parent_repo in member['member_of_groups']):
+                await t.add_member(team_slug,member['login'])
     for repo in tqdm(config.teams, desc='Teams'):
         for gp in repo['group_postfixes']:
-            team_slug = await t.create(f'{repo["repo"]}-{gp}', [f'{org}/{repo["repo"]}'])
+            parent = None
+            for parent_repo in config.parent_teams:
+                if f'{repo["repo"]}-{gp}' in parent_repo['children']:
+                    parent = parent_team_slug_map[parent_repo["team"]]
+            team_slug, _ = await t.create(f'{repo["repo"]}-{gp}', [f'{org}/{repo["repo"]}'], parent)
             await t.add_repository_permission(team_slug, f'{org}/{repo["repo"]}', gp)
             for member in config.members:
                 if (f'{repo["repo"]}-{gp}' in member['member_of_groups']):

@@ -8,15 +8,21 @@ class Team:
         self.endpoint = f'/orgs/{organization}/teams'
         self.conn = ConnectionHandler(config_file=config_file)
 
-    async def create(self, name, repo_names = []):
+    async def create(self, name, repo_names = [], parent_team = None):
         data = {
             'name': name,
             'repo_names': repo_names,
             'privacy': 'closed'
         }
+        if parent_team is not None:
+            data['parent_team_id'] = parent_team
         resp = await self.conn.post(self.endpoint, json_data=data)
-        return resp['slug']
+        return resp['slug'], resp['id']
     
+    async def get(self, slug):
+        resp = await self.conn.get(f'{self.endpoint}/{slug}')
+        return resp['id']
+
     async def add_member(self, team_name, member):
         endpoint = f'/orgs/{self.org}/teams/{team_name}/memberships/{member}'
         data = {
