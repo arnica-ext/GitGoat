@@ -1,5 +1,7 @@
+from datetime import datetime
 import git, os, logging
 from faker import Faker
+from src.secrets import Secrets
 
 class Commit:
     
@@ -8,10 +10,11 @@ class Commit:
         self.repo.git.add(update=True)
         self.origin = self.repo.remote(name='origin')
         self.fake = Faker()
+        self.secrets = Secrets()
 
     # Generates commits with some flexability. The count of commits and days since last commit are mandatory, while the others have default generators. 
     # If commit_dates are provided as a list, make sure the commit_messages list is the same length. 
-    def generate_commits(self, count: int, days_since_latest_commit: int, commit_dates: list = [], commit_messages: list = [], random_commit_messages: bool = True, commit_message: str = 'Random commit message', commits_filename = None):
+    def generate_commits(self, count: int, days_since_latest_commit: int, commit_dates: list = [], commit_messages: list = [], random_commit_messages: bool = True, commit_message: str = 'Random commit message', commits_filename = None, commit_secret = False):
         if len(commit_dates) == 0:
             commit_dates = self.generate_commit_dates(count, days_since_latest_commit)
         if len(commit_messages) == 0:
@@ -20,6 +23,12 @@ class Commit:
             self.repo.index.add([self.generate_file_message(filename=commits_filename)])
             timestamp = commit_dates.pop(0).strftime('%Y-%m-%d %H:%M:%S')
             self.repo.index.commit(commit_messages.pop(0), commit_date=timestamp, author_date=timestamp)
+        if commit_secret:
+            filename = f'secret_{self.fake.lexify(text="???????")}.txt'
+            self.repo.index.add([self.generate_file_message(filename=filename, file_content=self.secrets.get_next_secret())])
+            if timestamp is None:
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            self.repo.index.commit(f'GitGoat generated secret {self.fake.lexify(text="?????")}', commit_date=timestamp, author_date=timestamp)
         try:
             self.origin.push()
             #logging.info(f'Successfully pushed code from {self.repo.common_dir}')

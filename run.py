@@ -136,7 +136,10 @@ async def create_commits(config, org):
         for commit_details in tqdm(member['days_since_last_commit'], desc=f'Commits for {member["login"]}'):
             repo = await r.clone(commit_details['repo'], member['login'], token, member['email'], commit_details['branch'])
             c = Commit(repo)
-            c.generate_commits(25, commit_details['days'])
+            add_secret = False
+            if 'commit_secrets_in_repositories' in member and commit_details['repo'] in member['commit_secrets_in_repositories']:
+                add_secret = True
+            c.generate_commits(25, commit_details['days'], commit_secret = add_secret)
             if commit_details['create_pr']:
                 await pr.create_pull_request(token, commit_details['repo'], commit_details['branch'])
 

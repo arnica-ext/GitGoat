@@ -12,7 +12,6 @@ base_headers:
 ## Organization names to run GitGoat on.
 org_names:
   - GitGoat-Demo
-  
 
 ## Repo names to generate
 repo_names:
@@ -163,6 +162,7 @@ teams:
       - push
       - admin
 
+## This configuration nests teams under other teams.
 parent_teams:
   - team: Herbs-push
     repo_permissions:
@@ -204,6 +204,8 @@ members:
       - Wasabi-push
       - Peppermint-push
     days_since_last_commit: []
+    commit_secrets_in_repositories:
+      - Lavender
   - member_id: 90470369
     login: archiet-gg
     email: archiet@gitgoat.tools
@@ -290,6 +292,9 @@ members:
         days: 2
         branch: feature_P01
         create_pr: True
+    commit_secrets_in_repositories:
+      - Peppermint
+      - Lavender
   - member_id: 90473779
     login: codeyf-gg
     email: codeyf@gitgoat.tools
@@ -339,6 +344,8 @@ members:
         days: 23
         branch: feature_P02
         create_pr: True
+    commit_secrets_in_repositories:
+      - Chamomile
   - member_id: 90473997
     login: debu-gg
     email: debu@gitgoat.tools
