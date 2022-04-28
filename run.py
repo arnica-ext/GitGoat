@@ -10,8 +10,10 @@ from src.pull_request import PullRequest
 from src.direct_permissions import DirectPermission
 from src.branch import Branch
 from src.codeowners import CodeOwners
+from src.secrets import Secrets
 
 async def mock(config_file: str, orgs: list = []):
+    secrets = Secrets()
     config = Config() if config_file is None else Config(config_file)
     org_names = orgs if len(orgs) > 0 else config.org_names
     for org in org_names:
@@ -29,7 +31,7 @@ async def mock(config_file: str, orgs: list = []):
         logging.info('----- Granting Direct Permissions -----')
         await add_direct_permissions(config, org)
         logging.info('----- Creating Commits and Pull Requests -----')
-        await create_commits(config, org)
+        await create_commits(config, org, secrets)
         logging.info('----- Reviewing Pull Requests -----')
         await review_pull_requests(config, org)
         logging.info('----- Merging Pull Requests -----')
@@ -128,14 +130,14 @@ async def configure_branch_protection(config, org):
             require_code_owner_reviews = config.repo_configs[repo_name]['branch_protection_restirctions']['require_code_owner_reviews']
             await b.set_branch_protection(repo_name, 'main', enforce_admins, require_code_owner_reviews, users, teams)
 
-async def create_commits(config, org):
+async def create_commits(config, org, secrets):
     r = Repository(org, config.filename)
     pr = PullRequest(org, config.filename)
     for member in config.members:
         token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
         for commit_details in tqdm(member['days_since_last_commit'], desc=f'Commits for {member["login"]}'):
             repo = await r.clone(commit_details['repo'], member['login'], token, member['email'], commit_details['branch'])
-            c = Commit(repo)
+            c = Commit(repo, secrets)
             add_secret = False
             if 'commit_secrets_in_repositories' in member and commit_details['repo'] in member['commit_secrets_in_repositories']:
                 add_secret = True

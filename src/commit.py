@@ -5,12 +5,12 @@ from src.secrets import Secrets
 
 class Commit:
     
-    def __init__(self, repository: git.Repo):
+    def __init__(self, repository: git.Repo, secrets: Secrets):
         self.repo = repository
         self.repo.git.add(update=True)
         self.origin = self.repo.remote(name='origin')
         self.fake = Faker()
-        self.secrets = Secrets()
+        self.secrets = secrets
 
     # Generates commits with some flexability. The count of commits and days since last commit are mandatory, while the others have default generators. 
     # If commit_dates are provided as a list, make sure the commit_messages list is the same length. 

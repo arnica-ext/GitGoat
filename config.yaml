@@ -11,7 +11,8 @@ base_headers:
 
 ## Organization names to run GitGoat on.
 org_names:
-  - GitGoat-Demo
+  #- GitGoat-Demo
+  - nir-gitgoat-prod
 
 ## Repo names to generate
 repo_names:
@@ -204,8 +205,6 @@ members:
       - Wasabi-push
       - Peppermint-push
     days_since_last_commit: []
-    commit_secrets_in_repositories:
-      - Lavender
   - member_id: 90470369
     login: archiet-gg
     email: archiet@gitgoat.tools
@@ -249,6 +248,10 @@ members:
         days: 25
         branch: feature_W01
         create_pr: True
+    commit_secrets_in_repositories:
+      - Wasabi
+      - Chamomile
+      - Echinacea
   - member_id: 90471042
     login: billdp-gg
     email: billdp@gitgoat.tools
