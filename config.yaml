@@ -11,8 +11,7 @@ base_headers:
 
 ## Organization names to run GitGoat on.
 org_names:
-  #- GitGoat-Demo
-  - nir-gitgoat-prod
+  - GitGoat-Demo
 
 ## Repo names to generate
 repo_names:
