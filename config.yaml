@@ -23,6 +23,7 @@ repo_names:
   - Ginger
   - Wasabi
   - Peppermint
+  - Acai
 
 ## Specific configurations per repo (optional).
 ### "branch_protection" means the policy is enabled in the main branch
@@ -47,6 +48,26 @@ repo_configs:
     actions_enabled: True
     allowed_actions: all
     verified_allowed_actions: False
+  Acai:
+    branch_protection: True
+    branch_protection_restirctions:
+      users: [] 
+      teams: []
+      enforce_admins: False
+      require_code_owner_reviews: False
+    actions_enabled: True
+    allowed_actions: all
+    verified_allowed_actions: True
+    codeowners:
+      path: docs/
+      owners:
+        - pattern: '*'
+          teams:
+            - push
+        - pattern: 'acai_backend/'
+          users:
+            - archiet-gg
+            - miker-gg
   Echinacea:
     branch_protection: False
     actions_enabled: True
@@ -161,6 +182,11 @@ teams:
     group_postfixes:
       - push
       - admin
+  - repo: Acai
+    group_postfixes:
+      - push
+      - admin
+      - maintain
 
 ## This configuration nests teams under other teams.
 parent_teams:
@@ -203,6 +229,7 @@ members:
       - Ginger-push
       - Wasabi-push
       - Peppermint-push
+      - Acai-maintain
     days_since_last_commit: []
   - member_id: 90470369
     login: archiet-gg
@@ -222,6 +249,7 @@ members:
       - Ginger-push
       - Wasabi-push
       - Peppermint-push
+      - Acai-admin
     days_since_last_commit:
       - repo: Echinacea
         days: 91
@@ -247,10 +275,15 @@ members:
         days: 25
         branch: feature_W01
         create_pr: True
+      - repo: Acai
+        days: 20
+        branch: feature_A01
+        create_pr: True
     commit_secrets_in_repositories:
       - Wasabi
       - Chamomile
       - Echinacea
+      - Acai
   - member_id: 90471042
     login: billdp-gg
     email: billdp@gitgoat.tools
@@ -269,6 +302,7 @@ members:
       - Ginger-push
       - Wasabi-push
       - Peppermint-push
+      - Acai-maintain
     days_since_last_commit:
       - repo: Echinacea
         days: 120
@@ -294,8 +328,12 @@ members:
         days: 2
         branch: feature_P01
         create_pr: True
+      - repo: Acai
+        days: 20
+        branch: main
+        create_pr: False
     commit_secrets_in_repositories:
-      - Peppermint
+      - Acai
       - Lavender
   - member_id: 90473779
     login: codeyf-gg
@@ -358,4 +396,9 @@ members:
       - Chamomile-pull
       - Calendula-triage
       - Tarragon-pull
-    days_since_last_commit: []
+      - Acai-push
+    days_since_last_commit:
+      - repo: Acai
+        days: 100
+        branch: feature_A03
+        create_pr: True
