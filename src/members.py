@@ -7,14 +7,19 @@ class Membership:
     def __init__(self, organization, config_file = None):
         self.org = organization
         self.memberships_endpoint = f'/user/memberships/orgs/{organization}'
+        self.members_endpoint = f'/orgs/{organization}/members'
         self.invitations_endpoint = f'/orgs/{organization}/invitations'
         self.config = Config() if config_file is None else Config(config_file)
 
     # Invite all members that are configured in the config file.
     async def invite_members(self):
         conn = ConnectionHandler(config_file=self.config.filename)
+        current_members = await conn.get(self.members_endpoint)
+        skip_members = [m['login'] for m in current_members] if len(current_members) > 0 else []
         await self.__cancel_invitations(conn)
         for member in self.config.members:
+            if member['login'] in skip_members:
+                continue
             data = {
                 'invitee_id': member['member_id']
             }

@@ -1,5 +1,6 @@
 from src.connection import ConnectionHandler
 from faker import Faker
+import time, logging
 
 class PullRequest:
 
@@ -13,6 +14,9 @@ class PullRequest:
         endpoint = self.endpoint.replace('[REPO]', repository)
         pr_ids = {}
         resp = await conn.get(endpoint)
+        if 'message' in resp:
+            logging.error(f'No PRs found in {endpoint}. Skipping.')
+            return pr_ids
         for pr in resp:
             if pr['state'] == 'open': 
                 pr_ids[str(pr['number'])] = pr['user']['login']
