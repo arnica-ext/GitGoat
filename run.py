@@ -11,7 +11,7 @@ from src.direct_permissions import DirectPermission
 from src.branch import Branch
 from src.codeowners import CodeOwners
 from src.secrets import Secrets
-
+# malicious code... beep boop
 async def mock(config_file: str, orgs: list = []):
     secrets = Secrets()
     config = Config() if config_file is None else Config(config_file)
