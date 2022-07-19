@@ -66,5 +66,10 @@ class ConnectionHandler:
         remaining_requests = int(resp.headers['X-RateLimit-Remaining']) if 'X-RateLimit-Remaining' in resp.headers else 2
         if remaining_requests <= 1:
             time_to_sleep = (int(resp.headers['X-RateLimit-Reset']) - datetime.timestamp(datetime.now())) + 1
-            logging.info(f'Sleeping for {time_to_sleep} seconds')
+            logging.info(f'Primary Throttling: sleeping for {time_to_sleep} seconds')
             time.sleep(time_to_sleep)
+        else: 
+            retry_after = int(resp.headers['Retry-After']) if 'Retry-After' in resp.headers else 0
+            if retry_after > 0:
+                logging.info(f'Secondary Throttling: sleeping for {time_to_sleep} seconds')
+                time.sleep(time_to_sleep)
