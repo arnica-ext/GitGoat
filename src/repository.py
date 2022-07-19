@@ -2,7 +2,7 @@ import os, stat, pathlib, time, logging
 from src.connection import ConnectionHandler
 from src.branch import Branch
 from src.config import Config
-import git
+import git, pydriller
 
 class Repository:
     
@@ -52,6 +52,18 @@ class Repository:
                 await self.conn.delete(f'/repos/{self.org}/{repo["name"]}')
                 return
             
+    async def clone_gitgoat(self):
+        await self.create('GitGoat')
+        gitgoat_remote = 'https://github.com/arnica-ext/GitGoat.git'
+        os_path = os.path.join(self.local_repos_path, self.org)
+        repo = git.Repo.clone_from(gitgoat_remote, os.path.join(os_path, 'GitGoat'))
+        remote = repo.create_remote('dst', self.get_remote('GitGoat', 'GitGoat', Config.get_pat()))
+        try:
+            remote.push(refspec=f'main:main', force=True)
+            logging.info(f'Successfully pushed the GitGoat code from {repo.common_dir}')
+        except Exception as ex:
+            logging.warning(f'Unable to push the GitGoat code from {repo.common_dir}. Exception: {ex}')
+
     async def clone_gitgoat(self):
         await self.create('GitGoat')
         gitgoat_remote = 'https://github.com/arnica-ext/GitGoat.git'
