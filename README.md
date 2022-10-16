@@ -89,6 +89,14 @@ If everything went well, you should see the following in your newly created orga
 * 5 users named miker-gg (a.k.a. Mike Roservice) archie-gg (a.k.a. Archie Tekkt), billdp-gg (a.k.a. Bill De Pipeline), codeyf-gg (a.k.a. Codey Fie) and debu-gg (a.k.a. Deb Ugeen) as members in the organization and the teams. 
 * Many commits by the users in the last 12 months. Keep in mind that the commit dates are vary, but there is only a single push by every user to the relevant repository.
 
+# How to use GitGoat
+
+## Avoid changing the built-in repositories visibility
+GitGoat generates **valid** and invalid secrets to test hardcoded secrets detectors. **Please keep the repositories private** in order to avoid a situation where GitHub blocks the valid secrets when they are exposed publicly. 
+
+## Everything else is Kosher
+Well... do whatever you want with it...
+
 # Contribute to GitGoat
 GitGoat is open sourced to the community in order to encourage everyone to test security products in a rapid fashion without impacting the production operations. 
 In return, please open issues, create pull requests, or simply add us to the watch list to follow our enhancements in this project. 
