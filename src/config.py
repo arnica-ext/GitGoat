@@ -18,6 +18,7 @@ class Config:
         self.teams = self.__obj['teams']
         self.parent_teams = self.__obj['parent_teams']
         self.members = self.__obj['members']
+        self.repo_names_mapping_to_public_repos = self.__obj['repo_names_mapping_to_public_repos']
 
     def get_pat():
         __auth_password = os.getenv('github_token')

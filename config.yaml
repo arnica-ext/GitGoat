@@ -13,7 +13,6 @@ base_headers:
 org_names:
   - GitGoat-Demo
 
-
 ## Repo names to generate
 repo_names:
   - Echinacea
@@ -25,6 +24,37 @@ repo_names:
   - Wasabi
   - Peppermint
   - Acai
+
+## Public repo name mapping to private repo names.
+## This setting is used to generate as much as realistic commits as in other repos based on the "days_since_last_commit" setting in the members section below.
+repo_names_mapping_to_public_repos:
+  Echinacea: 
+    org: php
+    repo: php-src
+  Lavender:
+    org: llvm
+    repo: llvm-project
+  Chamomile:
+    org: nestjs
+    repo: nest
+  Calendula:
+    org: zricethezav
+    repo: gitleaks
+  Tarragon:
+    org: kata-containers
+    repo: kata-containers
+  Ginger:
+    org: grafana
+    repo: tempo
+  Wasabi:
+    org: aws
+    repo: aws-sdk-go-v2
+  Peppermint:
+    org: vuetifyjs
+    repo: vuetify
+  Acai:
+    org: apache
+    repo: echarts
 
 ## Specific configurations per repo (optional).
 ### "branch_protection" means the policy is enabled in the main branch
