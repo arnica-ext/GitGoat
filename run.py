@@ -17,19 +17,19 @@ async def mock(config_file: str, orgs: list = []):
     config = Config() if config_file is None else Config(config_file)
     org_names = orgs if len(orgs) > 0 else config.org_names
     for org in org_names:
-        logging.info(f'----- Organization: {org} -----')
-        logging.info('----- Creating Repos -----')
-        await create_repos(config, org)
-        logging.info('----- Setting up Actions configurations -----')
-        await setup_actions(config, org)
-        logging.info('----- Inviting Members -----')
-        await invite_members(config, org)
-        logging.info('----- Members accepting invitations -----')
-        await accept_invitations(config, org)
-        logging.info('----- Creating Teams -----')
-        await create_teams(config, org)
-        logging.info('----- Granting Direct Permissions -----')
-        await add_direct_permissions(config, org)
+        # logging.info(f'----- Organization: {org} -----')
+        # logging.info('----- Creating Repos -----')
+        # await create_repos(config, org)
+        # logging.info('----- Setting up Actions configurations -----')
+        # await setup_actions(config, org)
+        # logging.info('----- Inviting Members -----')
+        # await invite_members(config, org)
+        # logging.info('----- Members accepting invitations -----')
+        # await accept_invitations(config, org)
+        # logging.info('----- Creating Teams -----')
+        # await create_teams(config, org)
+        # logging.info('----- Granting Direct Permissions -----')
+        # await add_direct_permissions(config, org)
         logging.info('----- Creating Commits and Pull Requests -----')
         await create_commits(config, org, secrets)
         logging.info('----- Reviewing Pull Requests -----')
@@ -133,15 +133,16 @@ async def configure_branch_protection(config, org):
 async def create_commits(config, org, secrets):
     r = Repository(org, config.filename)
     pr = PullRequest(org, config.filename)
+    Commit.CONFIG_FILE = config.filename
     for member in config.members:
         token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
         for commit_details in tqdm(member['days_since_last_commit'], desc=f'Commits for {member["login"]}'):
             repo = await r.clone(commit_details['repo'], member['login'], token, member['email'], commit_details['branch'])
-            c = Commit(repo, secrets)
+            c = Commit(repo, secrets, commit_details['repo'], config.filename)
             add_secret = False
             if 'commit_secrets_in_repositories' in member and commit_details['repo'] in member['commit_secrets_in_repositories']:
                 add_secret = True
-            c.generate_commits(25, commit_details['days'], commit_secret = add_secret)
+            c.generate_mirrored_commits(commit_details['days'], commit_secret = add_secret)
             if commit_details['create_pr']:
                 await pr.create_pull_request(token, commit_details['repo'], commit_details['branch'])
 

@@ -12,7 +12,7 @@ base_headers:
 ## Organization names to run GitGoat on.
 org_names:
   - GitGoat-Demo
-
+  
 ## Repo names to generate
 repo_names:
   - Echinacea
@@ -29,32 +29,32 @@ repo_names:
 ## This setting is used to generate as much as realistic commits as in other repos based on the "days_since_last_commit" setting in the members section below.
 repo_names_mapping_to_public_repos:
   Echinacea: 
-    org: php
-    repo: php-src
+    org: juice-shop
+    repo: juice-shop
   Lavender:
-    org: llvm
-    repo: llvm-project
+    org: aquasecurity
+    repo: trivy
   Chamomile:
-    org: nestjs
-    repo: nest
+    org: bridgecrewio
+    repo: terragoat
   Calendula:
-    org: zricethezav
-    repo: gitleaks
+    org: WebGoat
+    repo: WebGoat
   Tarragon:
-    org: kata-containers
-    repo: kata-containers
+    org: OWASP
+    repo: NodeGoat
   Ginger:
-    org: grafana
-    repo: tempo
+    org: madhuakula
+    repo: kubernetes-goat
   Wasabi:
-    org: aws
-    repo: aws-sdk-go-v2
+    org: cider-security-research
+    repo: cicd-goat
   Peppermint:
-    org: vuetifyjs
-    repo: vuetify
+    org: arnica-ext
+    repo: GitGoat
   Acai:
-    org: apache
-    repo: echarts
+    org: OWASP
+    repo: railsgoat
 
 ## Specific configurations per repo (optional).
 ### "branch_protection" means the policy is enabled in the main branch

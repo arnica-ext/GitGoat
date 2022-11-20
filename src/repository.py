@@ -2,7 +2,7 @@ import os, stat, pathlib, time, logging
 from src.connection import ConnectionHandler
 from src.branch import Branch
 from src.config import Config
-import git
+import pygit2
 
 class Repository:
     
@@ -56,7 +56,7 @@ class Repository:
         await self.create('GitGoat')
         gitgoat_remote = 'https://github.com/arnica-ext/GitGoat.git'
         os_path = os.path.join(self.local_repos_path, self.org)
-        repo = git.Repo.clone_from(gitgoat_remote, os.path.join(os_path, 'GitGoat'))
+        repo = pygit2.clone_repository(url=gitgoat_remote, path=os.path.join(os_path, 'GitGoat'))
         remote = repo.create_remote('dst', self.get_remote('GitGoat', 'GitGoat', Config.get_pat()))
         try:
             remote.push(refspec=f'main:main', force=True)
@@ -67,17 +67,18 @@ class Repository:
     async def clone(self, repo_name, username, password, email, branch = 'main', retry = False):
         remote = self.get_remote(repo_name, username, password)
         os_path = os.path.join(self.local_repos_path, repo_name)
-        self.create_dir(os_path, username)
+        if not os.path.isdir(os_path):
+            os.mkdir(os_path)
         try: 
             if branch != 'main':
                 sha = await self.branch.get_main(password, repo_name)
                 create_branch = await self.branch.create_branch(password, repo_name, branch, sha)
             if not retry:
-                repo = git.Repo.clone_from(remote, os.path.join(os_path, username) , branch=branch)
+                repo = pygit2.clone_repository(url=remote, path=os.path.join(os_path, username), checkout_branch=branch)
             else:
-                repo = git.Repo.clone_from(remote, os.path.join(os_path, username, 'retry') , branch=f'{branch}_retry')
-            repo.config_writer().set_value("user", "name", username).release()
-            repo.config_writer().set_value("user", "email", email).release()
+                repo = pygit2.clone_repository(url=remote, path=os.path.join(os_path, username, 'retry'), checkout_branch=f'{branch}_retry')
+            repo.config.set_multivar(name='user.name', regex='^user.name$', value=username)
+            repo.config.set_multivar(name='user.email', regex='^user.name$', value=email)
         except Exception as ex:
             if not retry:
                 logging.warning(f'Waiting 10 seconds before retrying to clone repo {repo_name} to branch {branch}. Exception: {ex}')
