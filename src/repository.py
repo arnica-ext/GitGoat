@@ -40,11 +40,11 @@ class Repository:
     async def get_all(self):
         return await self.conn.get(self.endpoint)
 
-    async def create(self, name):
+    async def create(self, name, auto_init = True):
         data = {
             'name': name,
             'private': True,
-            'auto_init': False
+            'auto_init': auto_init
         }
         await self.conn.post(self.endpoint, json_data=data)
         
@@ -57,7 +57,7 @@ class Repository:
 
     async def clone_public_repo(self, source_org, source_repo):
         local_repo_name = self.config.get_repo_name_by_public_repo(source_org, source_repo)
-        await self.create(local_repo_name)
+        await self.create(local_repo_name, auto_init=False)
         public_remote = f'https://github.com/{source_org}/{source_repo}.git'
         os_path = os.path.join(self.local_repos_path, self.org)
         repo = pygit2.clone_repository(url=public_remote, path=os.path.join(os_path, local_repo_name), bare=True)
