@@ -31,7 +31,7 @@ class ConnectionHandler:
     
     async def post(self, endpoint, json_data):
         resp = requests.post(self.base_url + endpoint, headers=self.headers, json=json_data, verify=False)
-        if resp.status_code not in [200, 201]:
+        if resp.status_code not in [200, 201, 202]:
             logging.warning(f'The response code for the POST endpoint {endpoint} is {resp.status_code}. Message: {resp.text}')
             await self.__validate_rate_limit(resp)
             resp = requests.post(self.base_url + endpoint, headers=self.headers, json=json_data, verify=False)

@@ -2,6 +2,8 @@ import os, stat, pathlib, time, logging
 from src.connection import ConnectionHandler
 from src.branch import Branch
 from src.config import Config
+from datetime import datetime, timedelta
+from src.public_repo_map import IdentityMap
 import pygit2
 
 class Repository:
@@ -17,7 +19,8 @@ class Repository:
             self.rmtree(self.local_repos_path)
         os.mkdir(self.local_repos_path)
         os.environ['GIT_SSL_NO_VERIFY'] = "1"
-
+        self.identity_map = IdentityMap(config_file).map_authors()
+        
     def rmtree(self, top):
         for root, dirs, files in os.walk(top, topdown=False):
             for name in files:
@@ -41,7 +44,7 @@ class Repository:
         data = {
             'name': name,
             'private': True,
-            'auto_init': True
+            'auto_init': False
         }
         await self.conn.post(self.endpoint, json_data=data)
         
@@ -51,18 +54,41 @@ class Repository:
             if name == repo["name"]:
                 await self.conn.delete(f'/repos/{self.org}/{repo["name"]}')
                 return
-            
-    async def clone_gitgoat(self):
-        await self.create('GitGoat')
-        gitgoat_remote = 'https://github.com/arnica-ext/GitGoat.git'
+
+    async def clone_public_repo(self, source_org, source_repo):
+        local_repo_name = self.config.get_repo_name_by_public_repo(source_org, source_repo)
+        await self.create(local_repo_name)
+        public_remote = f'https://github.com/{source_org}/{source_repo}.git'
         os_path = os.path.join(self.local_repos_path, self.org)
-        repo = pygit2.clone_repository(url=gitgoat_remote, path=os.path.join(os_path, 'GitGoat'))
-        remote = repo.create_remote('dst', self.get_remote('GitGoat', 'GitGoat', Config.get_pat()))
+        repo = pygit2.clone_repository(url=public_remote, path=os.path.join(os_path, local_repo_name), bare=True)
+        await self.replace_public_repo_commits(repo, local_repo_name)
+        gitgoat_remote = repo.create_remote('dst', self.get_remote(local_repo_name, 'GitGoat', Config.get_pat()))
         try:
-            remote.push(refspec=f'main:main', force=True)
-            logging.info(f'Successfully pushed the GitGoat code from {repo.common_dir}')
+            gitgoat_remote.push(specs=[f'{repo.head.name}:refs/heads/main'])
+            logging.info(f'Successfully pushed the {source_repo} code to {local_repo_name}')
         except Exception as ex:
-            logging.warning(f'Unable to push the GitGoat code from {repo.common_dir}. Exception: {ex}')
+            logging.warning(f'Unable to push the {source_repo} code to {local_repo_name}. Exception: {ex}')
+    
+    async def replace_public_repo_commits(self, repo, local_repo_name):
+        email_to_login_map = self.config.get_email_to_login_map()
+        mapped_authors = self.identity_map[local_repo_name] if local_repo_name in self.identity_map else {}
+        last_commit_map = {}
+        for member in self.config.members:
+            for repo_config in member['days_since_last_commit']:
+                if repo_config['repo'] == local_repo_name:
+                    last_commit_map[member['email']] = repo_config['days']
+        amended_commit = None
+        for commit in repo.walk(repo.head.target.hex, pygit2.GIT_SORT_TIME):
+            if commit.author is not None \
+                and commit.author.email is not None \
+                and commit.author.email in mapped_authors and \
+                int((datetime.utcnow() - timedelta(last_commit_map[mapped_authors[commit.author.email]])).timestamp()) > commit.commit_time:
+                    author = pygit2.Signature(name=email_to_login_map[mapped_authors[commit.author.email]], email=mapped_authors[commit.author.email], time=commit.commit_time, offset=commit.commit_time_offset)
+                    amended_commit = repo.amend_commit(commit=commit, refname=None, author=author, committer=author)
+            elif amended_commit is not None:
+                amended_commit = repo.amend_commit(commit=commit, refname=None)
+                    
+
 
     async def clone(self, repo_name, username, password, email, branch = 'main', retry = False):
         remote = self.get_remote(repo_name, username, password)

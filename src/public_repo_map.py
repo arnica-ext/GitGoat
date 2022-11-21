@@ -15,7 +15,7 @@ class IdentityMap:
         os.environ['GIT_SSL_NO_VERIFY'] = "1"
         self.members_activity_config = self.get_members_activity_config()
         self.repos_map = self.config.repo_names_mapping_to_public_repos
-        self.earliest_commit = int((datetime.utcnow() - timedelta(180)).timestamp())
+        self.earliest_commit = int((datetime.utcnow() - timedelta(1800)).timestamp())
         self.max_mapped_contributors = 10
     
     def get_members_activity_config(self):
@@ -68,8 +68,7 @@ class IdentityMap:
         os_path = os.path.join(self.local_repos_path, f'{organization}-{repository}')
         if os.path.isdir(os_path):
             logging.info(f'A local copy of the repository {organization}/{repository} exists. Pulling recent changes.')
-            subprocess.run(['git', '-C', os_path, 'pull'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        
+            subprocess.run(['git', '-C', os_path, 'pull'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  
         else:
             logging.info(f'This is the fist time the repository {organization}/{repository} is cloned, so it may take less time going forward.')
             subprocess.run(['git', 'clone', remote, os_path], stderr=subprocess.DEVNULL)   

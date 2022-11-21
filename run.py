@@ -17,9 +17,9 @@ async def mock(config_file: str, orgs: list = []):
     config = Config() if config_file is None else Config(config_file)
     org_names = orgs if len(orgs) > 0 else config.org_names
     for org in org_names:
-        # logging.info(f'----- Organization: {org} -----')
-        # logging.info('----- Creating Repos -----')
-        # await create_repos(config, org)
+        logging.info(f'----- Organization: {org} -----')
+        logging.info('----- Creating Repos -----')
+        await create_repos(config, org)
         # logging.info('----- Setting up Actions configurations -----')
         # await setup_actions(config, org)
         # logging.info('----- Inviting Members -----')
@@ -45,9 +45,14 @@ async def create_repos(config, org):
     r = Repository(org, config.filename) 
     await r.delete_existing_repos()
     for repo_name in tqdm(config.repo_names, desc='Repos'):
-        await r.create(repo_name)
-    logging.info(f'Cloning GitGoat and pushing to org {org}.')
-    await r.clone_gitgoat()
+        if repo_name in config.repo_names_mapping_to_public_repos:
+            await r.clone_public_repo(config.repo_names_mapping_to_public_repos[repo_name]['org'], config.repo_names_mapping_to_public_repos[repo_name]['repo'])
+            logging.info(f'Forked {repo_name} to org {org}.')
+        else:
+            await r.create(repo_name)
+            logging.info(f'Created {repo_name} in org {org}.')
+    #logging.info(f'Cloning GitGoat and pushing to org {org}.')
+    #await r.clone_gitgoat()
     
 async def create_teams(config, org):
     t = Team(org, config.filename)

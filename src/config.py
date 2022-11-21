@@ -36,3 +36,10 @@ class Config:
         for membership in self.members:
             map[membership['email']] = membership['login']
         return map
+
+    def get_repo_name_by_public_repo(self, public_org, public_repo):
+        for repo in self.repo_names_mapping_to_public_repos:
+            if self.repo_names_mapping_to_public_repos[repo]['org'] == public_org \
+                and self.repo_names_mapping_to_public_repos[repo]['repo'] == public_repo:
+                    return repo
+        return None
