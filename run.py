@@ -47,7 +47,7 @@ async def create_repos(config, org):
     for repo_name in tqdm(config.repo_names, desc='Repos'):
         if repo_name in config.repo_names_mapping_to_public_repos:
             await r.clone_public_repo(config.repo_names_mapping_to_public_repos[repo_name]['org'], config.repo_names_mapping_to_public_repos[repo_name]['repo'])
-            logging.info(f'Forked {repo_name} to org {org}.')
+            logging.info(f'Cloned {config.repo_names_mapping_to_public_repos[repo_name]["repo"]} to org {org} and repo {repo_name}.')
         else:
             await r.create(repo_name)
             logging.info(f'Created {repo_name} in org {org}.')

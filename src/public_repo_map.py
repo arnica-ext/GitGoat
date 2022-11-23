@@ -35,7 +35,7 @@ class IdentityMap:
             members_metadata = self.get_members_from_public_repo(self.repos_map[repo]['org'], self.repos_map[repo]['repo'])
             for member in self.members_activity_config[repo]:
                 if len(members_metadata) > 0:
-                    map[repo][members_metadata.pop()] = member['email']
+                    map[repo][members_metadata.pop(0)] = member['email']
         return map
     
     def get_members_from_public_repo(self, organization, repository):
@@ -47,7 +47,7 @@ class IdentityMap:
                 break
             if len(commit.parent_ids) > 1: # Merge commits
                 continue
-            if commit.author is not None and commit.author.email is not None:
+            if commit.author is not None and commit.author.email is not None and '[bot]' not in commit.author.email:
                 if commit.author.email not in members_metadata:
                     members_metadata[commit.author.email] = 0
                 members_metadata[commit.author.email] += 1

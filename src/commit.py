@@ -4,14 +4,13 @@ import git, os, logging, pygit2, tqdm
 from faker import Faker
 from src.config import Config
 from src.secrets import Secrets
-from src.public_repo_map import IdentityMap
 
 class Commit:
     
     def __init__(self, repository: pygit2.repository, secrets: Secrets, gitgoat_repo_name: str, config_file = None):
         self.repo = repository
-        self.repo.git.add(update=True)
-        self.origin = self.repo.remote(name='origin') 
+        #self.repo.git.add(update=True)
+        #self.origin = self.repo.remote(name='origin') 
         self.fake = Faker()
         self.secrets = secrets
         self.gitgoat_repo_name = gitgoat_repo_name
