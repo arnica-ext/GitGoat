@@ -28,7 +28,7 @@ repo_names:
 ## Public repo name mapping to private repo names.
 ## This setting is used to generate as much as realistic commits as in other repos based on the "days_since_last_commit" setting in the members section below.
 repo_names_mapping_to_public_repos:
-  Lavender:
+  Acai:
     org: juice-shop
     repo: juice-shop
   Echinacea:
@@ -52,7 +52,7 @@ repo_names_mapping_to_public_repos:
   Peppermint:
     org: aquasecurity
     repo: trivy
-  Acai:
+  Lavender:
     org: OWASP
     repo: railsgoat
 
