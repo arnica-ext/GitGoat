@@ -8,6 +8,8 @@ import pygit2
 
 class Repository:
     
+    AMENDED_BRANCH = 'amended'
+    
     def __init__(self, organization, config_file = None):
         self.org = organization
         self.endpoint = f'/orgs/{organization}/repos'
@@ -55,16 +57,24 @@ class Repository:
                 await self.conn.delete(f'/repos/{self.org}/{repo["name"]}')
                 return
 
-    async def clone_public_repo(self, source_org, source_repo):
+    async def clone_public_repo(self, source_org, source_repo, retry_attempts = 3):
         local_repo_name = self.config.get_repo_name_by_public_repo(source_org, source_repo)
         await self.create(local_repo_name, auto_init=False)
         public_remote = f'https://github.com/{source_org}/{source_repo}.git'
         os_path = os.path.join(self.local_repos_path, self.org)
-        repo = pygit2.clone_repository(url=public_remote, path=os.path.join(os_path, local_repo_name), bare=True)
+        try:
+            logging.info(f'Cloning the repo {local_repo_name} for the source code of {source_repo}.') # TODO: remove this log
+            repo = pygit2.clone_repository(url=public_remote, path=os.path.join(os_path, local_repo_name), bare=True)
+            logging.info(f'Completed cloning...') # TODO: remove this log
+        except Exception as ex:
+            if retry_attempts > 0:
+                logging.warning(f'Could not clone the repo {source_repo}. Retry attempts: {retry_attempts - 1}. Error: {ex}.')
+                await self.clone_public_repo(source_org, source_repo, retry_attempts - 1)
+            return
         await self.replace_public_repo_commits(repo, local_repo_name)
         gitgoat_remote = repo.create_remote('dst', self.get_remote(local_repo_name, 'GitGoat', Config.get_pat()))
         try:
-            gitgoat_remote.push(specs=[f'{repo.head.name}:refs/heads/main'])
+            gitgoat_remote.push(specs=[f'refs/heads/{Repository.AMENDED_BRANCH}:refs/heads/main'])
             logging.info(f'Successfully pushed the {source_repo} code to {local_repo_name}')
         except Exception as ex:
             logging.warning(f'Unable to push the {source_repo} code to {local_repo_name}. Exception: {ex}')
@@ -77,19 +87,92 @@ class Repository:
             for repo_config in member['days_since_last_commit']:
                 if repo_config['repo'] == local_repo_name:
                     last_commit_map[member['email']] = repo_config['days']
-        amended_commit = None
-        for commit in repo.walk(repo.head.target.hex, pygit2.GIT_SORT_TIME):
+        Repository.amend_repo(repo, mapped_authors, email_to_login_map)
+        return True
+
+    def amend_repo(repo: pygit2.Repository, mapped_authors, email_to_login_map):
+        last_commit = None
+        branch = pygit2.Repository(repo.path)
+        ref = None
+        tag_names = [r for r in repo.references]
+        tag_names.pop(0)
+        tag_commits = []
+        for tag in tag_names:
+            if type(repo.references[tag].target) is pygit2.Oid:
+                tag_commits.append(repo.references[tag].target.hex)
+        for commit in repo.walk(repo.head.target.hex, pygit2.GIT_SORT_TIME | pygit2.GIT_SORT_REVERSE):
+            #if len(commit.parents) > 1 or commit.hex in tag_commits:
+            #    continue
             if commit.author is not None \
                 and commit.author.email is not None \
-                and commit.author.email in mapped_authors and \
-                int((datetime.utcnow() - timedelta(last_commit_map[mapped_authors[commit.author.email]])).timestamp()) > commit.commit_time:
+                and commit.author.email in mapped_authors: # and \
+                #int((datetime.utcnow() - timedelta(last_commit_map[mapped_authors[commit.author.email]])).timestamp()) > commit.commit_time:
+                    if ref is None:
+                        ref = repo.branches.local.create(Repository.AMENDED_BRANCH, commit)
+                        continue
                     author = pygit2.Signature(name=email_to_login_map[mapped_authors[commit.author.email]], email=mapped_authors[commit.author.email], time=commit.commit_time, offset=commit.commit_time_offset)
-                    amended_commit = repo.amend_commit(commit=commit, refname=None, author=author, committer=author)
-            elif amended_commit is not None:
-                amended_commit = repo.amend_commit(commit=commit, refname=None)
+                    Repository.cherrypick(repo, commit, author, author)
+            elif ref is not None:
+                    Repository.cherrypick(repo, commit, commit.author, commit.committer)            #             branch.checkout(ref.name, strategy=pygit2.GIT_CHECKOUT_SAFE|pygit2.GIT_CHECKOUT_ALLOW_CONFLICTS)
+            #             last_commit = commit
+            #             continue
+            #         Repository.cherry_pick(branch, commit)          
+            #         tree_id = branch.index.write_tree()
+            #         author = pygit2.Signature(name=email_to_login_map[mapped_authors[commit.author.email]], email=mapped_authors[commit.author.email], time=commit.commit_time, offset=commit.commit_time_offset)
+            #         last_commit = branch.create_commit(branch.head.name, author, author, commit.message, tree_id, [last_commit.hex])
+            #         #author = pygit2.Signature(name=email_to_login_map[mapped_authors[commit.author.email]], email=mapped_authors[commit.author.email], time=commit.commit_time, offset=commit.commit_time_offset)
+            #         #amended_commit = branch.amend_commit(commit=commit, refname=None, author=author, committer=author)
+            #         #new_commit = branch.create_commit(branch.head.name, author, author, commit.message, repo.TreeBuilder().write(), [last_commit])
+            #         #amended_commit = repo.amend_commit(commit=commit, refname=None, author=author, committer=author)
+            # elif last_commit is not None:
+            #         Repository.cherry_pick(branch, commit)
+            #         tree_id = branch.index.write_tree()
+            #         last_commit = branch.create_commit(branch.head.name, commit.author, commit.committer, commit.message, tree_id, [last_commit.hex])
                     
+            #last_commit = commit
 
+        #repo.reset(amended_commit, pygit2.GIT_RESET_SOFT)
+        ## and idea - reset to the first commit and the replay the commits
+    
+    def cherrypick(repo: pygit2.Repository, cherry: pygit2.Commit, author: pygit2.Signature, committer: pygit2.Signature):
+        basket = repo.branches.get('amended')
+        base = repo.merge_base(cherry.id, basket.target)
+        base_tree = cherry.parents[0].tree
+        index = repo.merge_trees(base_tree, basket, cherry, favor='theirs')
+        if index.conflicts is not None:
+            for conflict in index.conflicts:
+                index_entry = conflict[2] if conflict[2] is not None else conflict[0]
+                index.read_tree(index_entry.id)
+        tree_id = index.write_tree(repo)
+        if repo.odb.exists(tree_id):
+            t, d = repo.odb.read(tree_id)
+            repo.odb.write(t, d)
+        if repo.odb.exists(basket.target):
+            t, d = repo.odb.read(basket.target)
+            repo.odb.write(t, d)
+        repo.create_commit(basket.name, author, committer, cherry.message,
+                   tree_id, [basket.target], cherry.message_encoding)
+    
+    def cherry_pick(repo: pygit2.Repository, commit: pygit2.Commit):
+        repo.cherrypick(commit.oid)
+        if repo.index.conflicts is not None:
+            for conflict in repo.index.conflicts:
+            
+                print("a")
+                #Repository.resolve_conflict(repo, conflict)
+            #repo.index.add_all()        
+        repo.state_cleanup()
 
+    def resolve_conflict(repo: pygit2.Repository, conflict):
+        for attempt in [2,1,0]:
+            try:
+                path = os.path.join(repo.workdir, conflict[attempt].path)
+                with open(path, 'wb') as f:
+                    f.write(repo[conflict[attempt].hex].peel(pygit2.Blob).data)
+                return
+            except:
+                continue
+                
     async def clone(self, repo_name, username, password, email, branch = 'main', retry = False):
         remote = self.get_remote(repo_name, username, password)
         os_path = os.path.join(self.local_repos_path, repo_name)
