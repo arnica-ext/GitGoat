@@ -6,10 +6,12 @@ import pygit2
 
 class IdentityMap:
     
+    PUBLIC_REPOS_PATH = 'public_repos'
+    
     def __init__(self, config_file = None):
         self.config = Config() if config_file is None else Config(config_file)
         self.conn = ConnectionHandler(config_file=config_file)
-        self.local_repos_path = os.path.join(pathlib.Path().resolve(),'public_repos')
+        self.local_repos_path = os.path.join(pathlib.Path().resolve(),IdentityMap.PUBLIC_REPOS_PATH)
         if not os.path.isdir(self.local_repos_path):
             os.mkdir(self.local_repos_path)
         os.environ['GIT_SSL_NO_VERIFY'] = "1"

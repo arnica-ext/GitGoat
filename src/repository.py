@@ -26,11 +26,17 @@ class Repository:
     def rmtree(self, top):
         for root, dirs, files in os.walk(top, topdown=False):
             for name in files:
-                filename = os.path.join(root, name)
-                os.chmod(filename, stat.S_IWUSR)
-                os.remove(filename)
+                try:
+                    filename = os.path.join(root, name)
+                    os.chmod(filename, stat.S_IWUSR)
+                    os.remove(filename)
+                except:
+                    os.remove(filename)
             for name in dirs:
-                os.rmdir(os.path.join(root, name))
+                try:
+                    os.rmdir(os.path.join(root, name))
+                except:
+                    continue
         os.rmdir(top)
     
     async def delete_existing_repos(self):
@@ -59,23 +65,34 @@ class Repository:
 
     async def clone_public_repo(self, source_org, source_repo, retry_attempts = 3):
         local_repo_name = self.config.get_repo_name_by_public_repo(source_org, source_repo)
-        await self.create(local_repo_name, auto_init=False)
+        if retry_attempts == 3:
+            await self.create(local_repo_name, auto_init=False)
         public_remote = f'https://github.com/{source_org}/{source_repo}.git'
         os_path = os.path.join(self.local_repos_path, self.org)
+        default_branch = await self.conn.get(f'/repos/{source_org}/{source_repo}')
+        default_branch = default_branch['default_branch']
         try:
             repo = pygit2.clone_repository(url=public_remote, path=os.path.join(os_path, local_repo_name), bare=False)
         except Exception as ex:
-            if retry_attempts > 0:
-                logging.warning(f'Could not clone the repo {source_repo}. Retry attempts: {retry_attempts - 1}. Error: {ex}.')
+            if retry_attempts >= 0:
+                logging.warning(f'Could not clone the repo {source_repo}. Remaining retry attempts: {retry_attempts - 1}. Error: {ex}.')
                 await self.clone_public_repo(source_org, source_repo, retry_attempts - 1)
             return
         await self.replace_public_repo_commits(repo, local_repo_name)
         gitgoat_remote = repo.create_remote('dst', self.get_remote(local_repo_name, 'GitGoat', Config.get_pat()))
+        # try:
+        #     gitgoat_remote = repo.create_remote('dst', self.get_remote(local_repo_name, 'GitGoat', Config.get_pat()))
+        #     gitgoat_remote.push(specs=[f'refs/heads/{default_branch}:refs/heads/main'])
+        # except Exception as ex:
+        #     logging.warning(f'Unable to push the original {source_repo} code to {local_repo_name}. Exception: {ex}')
+        # await self.replace_public_repo_commits(repo, local_repo_name)
+        # #gitgoat_remote = repo.create_remote('dst', self.get_remote(local_repo_name, 'GitGoat', Config.get_pat()))
         try:
-            gitgoat_remote.push(specs=[f'refs/heads/{Repository.AMENDED_BRANCH}:refs/heads/main'])
+            logging.info(f'Trying to push the {source_repo} code to {local_repo_name}')
+            gitgoat_remote.push(specs=[f'+refs/heads/{Repository.AMENDED_BRANCH}:refs/heads/main'])
             logging.info(f'Successfully pushed the {source_repo} code to {local_repo_name}')
         except Exception as ex:
-            logging.warning(f'Unable to push the {source_repo} code to {local_repo_name}. Exception: {ex}')
+            logging.warning(f'Unable to push the tampered {source_repo} code to {local_repo_name}. Exception: {ex}')
     
     async def replace_public_repo_commits(self, repo, local_repo_name):
         email_to_login_map = self.config.get_email_to_login_map()
@@ -90,6 +107,7 @@ class Repository:
 
     def amend_repo(repo: pygit2.Repository, mapped_authors, email_to_login_map):
         ref = None
+        #reset_commit = None
         for commit in repo.walk(repo.head.target.hex, pygit2.GIT_SORT_TIME | pygit2.GIT_SORT_REVERSE):
             if commit.author is not None \
                 and commit.author.email is not None \
@@ -97,24 +115,41 @@ class Repository:
                 #int((datetime.utcnow() - timedelta(last_commit_map[mapped_authors[commit.author.email]])).timestamp()) > commit.commit_time:
                     if ref is None:
                         ref = repo.branches.local.create(Repository.AMENDED_BRANCH, commit)
+                        #reset_commit = commit.oid
                         continue
                     author = pygit2.Signature(name=email_to_login_map[mapped_authors[commit.author.email]], email=mapped_authors[commit.author.email], time=commit.commit_time, offset=commit.commit_time_offset)
                     Repository.cherrypick(repo, commit, author, author)
             elif ref is not None:
                     Repository.cherrypick(repo, commit, commit.author, commit.committer) 
+        #repo.reset(reset_commit, pygit2.GIT_RESET_HARD)
+        #repo.merge(repo.branches.get(Repository.AMENDED_BRANCH).target)
     
     def cherrypick(repo: pygit2.Repository, cherry: pygit2.Commit, author: pygit2.Signature, committer: pygit2.Signature):
-        basket = repo.branches.get('amended')
-        base = repo.merge_base(cherry.id, basket.target)
-        base_tree = cherry.parents[0].tree
-        index = repo.merge_trees(base_tree, basket, cherry, favor='theirs')
+        basket = repo.branches.get(Repository.AMENDED_BRANCH)
+        base = repo.merge_base(basket.target, cherry.id)
+        if base.hex in [parent.hex for parent in cherry.parents]:
+            index = repo.merge_trees(base, basket, cherry, favor='theirs')
+        else:
+            index = repo.merge_trees(repo[basket.target].parents[0], basket, cherry, favor='theirs')
         if index.conflicts is not None:
             for conflict in index.conflicts:
-                index_entry = conflict[2] if conflict[2] is not None else conflict[0]
-                index.read_tree(index_entry.id)
-                index.add(index_entry)
-        tree_id = index.write_tree(repo)
+                try:
+                    index_entry = Repository.select_merge_resolution(conflict)
+                    if index_entry is None:
+                        continue
+                    index.read_tree(index_entry.id)
+                    index.add(index_entry)
+                except KeyError as ex:
+                    return
+        tree_id = index.write_tree()
         repo.create_commit(basket.name, author, committer, cherry.message,tree_id, [basket.target])
+    
+    def select_merge_resolution(conflict: pygit2.IndexEntry):
+        if conflict[2] is not None:
+            return conflict[2]
+        elif conflict[1] is not None:
+            return conflict[1]
+        return None
                 
     async def clone(self, repo_name, username, password, email, branch = 'main', retry = False):
         remote = self.get_remote(repo_name, username, password)
