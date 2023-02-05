@@ -18,6 +18,8 @@ class Config:
         self.teams = self.__obj['teams']
         self.parent_teams = self.__obj['parent_teams']
         self.members = self.__obj['members']
+        self.repo_names_mapping_to_public_repos = self.__obj['repo_names_mapping_to_public_repos']
+        self.email_to_login_map = self.get_email_to_login_map()
 
     def get_pat():
         __auth_password = os.getenv('github_token')
@@ -27,4 +29,17 @@ class Config:
         return __auth_password
 
     def generate_auth_header(pat: str):
-        return 'Basic ' + base64.b64encode(('GitGoat:' + pat).encode('ascii')).decode('ascii')
+        return 'Bearer ' + pat
+    
+    def get_email_to_login_map(self):
+        map = {}
+        for membership in self.members:
+            map[membership['email']] = membership['login']
+        return map
+
+    def get_repo_name_by_public_repo(self, public_org, public_repo):
+        for repo in self.repo_names_mapping_to_public_repos:
+            if self.repo_names_mapping_to_public_repos[repo]['org'] == public_org \
+                and self.repo_names_mapping_to_public_repos[repo]['repo'] == public_repo:
+                    return repo
+        return None

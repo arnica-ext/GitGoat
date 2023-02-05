@@ -4,3 +4,4 @@ requests
 pyyaml
 coloredlogs
 tqdm
+pygit2

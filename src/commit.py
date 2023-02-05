@@ -1,64 +1,72 @@
-from datetime import datetime
-import git, os, logging
+from datetime import datetime, timedelta
+from random import random
+import git, os, logging, pygit2, tqdm, subprocess, base64
 from faker import Faker
+from src.config import Config
 from src.secrets import Secrets
+from src.connection import ConnectionHandler
+
 
 class Commit:
     
-    def __init__(self, repository: git.Repo, secrets: Secrets):
-        self.repo = repository
-        self.repo.git.add(update=True)
-        self.origin = self.repo.remote(name='origin')
+    def __init__(self, secrets: Secrets, access_token: str, config_file = None):
+        self.pat = access_token
         self.fake = Faker()
         self.secrets = secrets
+        self.config = Config() if config_file is None else Config(config_file)
+        self.conn = ConnectionHandler(config_file=config_file)
 
-    # Generates commits with some flexability. The count of commits and days since last commit are mandatory, while the others have default generators. 
-    # If commit_dates are provided as a list, make sure the commit_messages list is the same length. 
-    def generate_commits(self, count: int, days_since_latest_commit: int, commit_dates: list = [], commit_messages: list = [], random_commit_messages: bool = True, commit_message: str = 'Random commit message', commits_filename = None, commit_secret = False):
-        if len(commit_dates) == 0:
-            commit_dates = self.generate_commit_dates(count, days_since_latest_commit)
-        if len(commit_messages) == 0:
-            commit_messages = self.generate_commit_messages(len(commit_dates), random_commit_messages, commit_message)
-        for _ in range(len(commit_dates)):
-            self.repo.index.add([self.generate_file_message(filename=commits_filename)])
-            timestamp = commit_dates.pop(0).strftime('%Y-%m-%d %H:%M:%S')
-            self.repo.index.commit(commit_messages.pop(0), commit_date=timestamp, author_date=timestamp)
-        if commit_secret:
-            filename = f'secret_{self.fake.lexify(text="???????")}.txt'
-            self.repo.index.add([self.generate_file_message(filename=filename, file_content=self.secrets.get_next_secret())])
-            if timestamp is None:
-                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            self.repo.index.commit(f'GitGoat generated secret {self.fake.lexify(text="?????")}', commit_date=timestamp, author_date=timestamp)
-        try:
-            self.origin.push()
-            #logging.info(f'Successfully pushed code from {self.repo.common_dir}')
-        except Exception:
-            logging.warning(f'Unable to push code from {self.repo.common_dir}')
+    async def get_branch_hash(self, organization: str, repository: str, branch: str):
+        resp = await self.conn.get(f'/repos/{organization}/{repository}/git/refs')
+        for ref in resp:
+            if f'refs/heads/{branch}' == ref['ref']:
+                return ref['object']['sha']
+            elif f'refs/heads/main' == ref['ref']:
+                main_sha = ref['object']['sha']
+        json_data = {
+                    'ref':f'refs/heads/{branch}',
+                    'sha': main_sha
+                }
+        resp = await self.conn.post(f'/repos/{organization}/{repository}/git/refs', json_data=json_data)
+        return resp['object']['sha']
 
-    # The file name and content are automatically generated if the values are not assigned.
-    # The open_file_mode setting options are 'w' for overwiriting or 'a' for appending content. 
-    def generate_file_message(self, filename = None, file_content = None, open_file_mode = 'w'):
-        if filename is None:
-            filename = f'{self.fake.lexify(text="???????")}.txt'
-        filename = os.path.join(self.repo.working_dir,filename)
-        content = file_content if file_content is not None else self.fake.paragraph(nb_sentences=1)
-        with open(filename, open_file_mode) as f:
-                f.write(content)
-        return filename
+    async def generate_random_commits(self, organization: str, repository: str, branch: str, branch_head_hash: str, count: int, days_since_latest_commit: int, commit_secret = False):
+        if days_since_latest_commit > 90 and not commit_secret:
+            return
+        query = """
+            mutation ($input: CreateCommitOnBranchInput!) {
+                createCommitOnBranch(input: $input) {
+                    commit {
+                        url
+                    }
+                }
+            }
+        """
+        additions = []
+        for _ in range(3):
+            additions.append({
+                'path': f'GitGoat_{self.fake.lexify(text="???????")}.txt',
+                'contents': self.base64_encode(self.secrets.get_next_secret()) if commit_secret else self.base64_encode()
+            })  
+        variables = {
+                    'input': {
+                        'branch': {
+                            'repositoryNameWithOwner': f'{organization}/{repository}',
+                            'branchName': branch
+                        },
+                        'message': {
+                            'headline': f'Random commit message from GitGoat - {self.fake.lexify(text="?????")}'
+                        },
+                        'fileChanges': {
+                            'additions': additions
+                        },
+                        "expectedHeadOid": branch_head_hash
+                    }
+                }
+        resp = await self.conn.post_graphql(query, variables, self.pat)
+        return resp
 
-    def generate_commit_messages(self, count: int, random: bool = True, message: str = 'Random commit message'):
-        commit_messages = []
-        text = message if random is False else message + ' ???????????????' 
-        for _ in range(count):
-            commit_messages.append(self.fake.lexify(text=text))
-        return commit_messages
-
-    def generate_commit_dates(self, count: int, days_since_latest_commit):
-        commit_dates = []
-        end_date = f'-{str(days_since_latest_commit)}d'
-        for _ in range(count):
-            commit_dates.append(self.fake.date_time_between(start_date='-1y', end_date=end_date, tzinfo=None))
-        if days_since_latest_commit < 60:
-            for _ in range(int(count/10)):
-                commit_dates.append(self.fake.date_time_between(start_date='-29d', end_date=end_date, tzinfo=None))       
-        return commit_dates
+    def base64_encode(self, content = None):
+        text = content if content is not None else self.fake.paragraph(nb_sentences=1)
+        base64_bytes = base64.b64encode(text.encode('ascii'))
+        return base64_bytes.decode('ascii')
