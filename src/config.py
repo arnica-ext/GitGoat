@@ -29,7 +29,7 @@ class Config:
         return __auth_password
 
     def generate_auth_header(pat: str):
-        return 'Basic ' + base64.b64encode(('GitGoat:' + pat).encode('ascii')).decode('ascii')
+        return 'Bearer ' + pat
     
     def get_email_to_login_map(self):
         map = {}

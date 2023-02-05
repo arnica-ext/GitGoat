@@ -7,7 +7,6 @@ from src.actions import Actions
 from src.commit import Commit
 from src.members import Membership
 from src.pull_request import PullRequest
-from src.direct_permissions import DirectPermission
 from src.branch import Branch
 from src.codeowners import CodeOwners
 from src.secrets import Secrets
@@ -20,37 +19,36 @@ async def mock(config_file: str, orgs: list = []):
         logging.info(f'----- Organization: {org} -----')
         logging.info('----- Creating Repos -----')
         await create_repos(config, org)
-        # logging.info('----- Setting up Actions configurations -----')
-        # await setup_actions(config, org)
-        # logging.info('----- Inviting Members -----')
-        # await invite_members(config, org)
-        # logging.info('----- Members accepting invitations -----')
-        # await accept_invitations(config, org)
-        # logging.info('----- Creating Teams -----')
-        # await create_teams(config, org)
-        # logging.info('----- Granting Direct Permissions -----')
-        # await add_direct_permissions(config, org)
-        # logging.info('----- Creating Commits and Pull Requests -----')
-        # await create_commits(config, org, secrets)
-        # logging.info('----- Reviewing Pull Requests -----')
-        # await review_pull_requests(config, org)
-        # logging.info('----- Merging Pull Requests -----')
-        # await merge_pull_requests(config, org)
-        # logging.info('----- Configuring Branch Protection -----')
-        # await configure_branch_protection(config, org)
-        # logging.info('----- Configuring CODEOWNERS -----')
-        # await configure_codeowners(config, org)
+        logging.info('----- Setting up Actions configurations -----')
+        await setup_actions(config, org)
+        logging.info('----- Inviting Members -----')
+        await invite_members(config, org)
+        logging.info('----- Members accepting invitations -----')
+        await accept_invitations(config, org)
+        logging.info('----- Creating Teams -----')
+        await create_teams(config, org)
+        logging.info('----- Creating Commits and Pull Requests -----')
+        await create_commits(config, org, secrets)
+        logging.info('----- Reviewing Pull Requests -----')
+        await review_pull_requests(config, org)
+        logging.info('----- Merging Pull Requests -----')
+        await merge_pull_requests(config, org)
+        logging.info('----- Configuring CODEOWNERS -----')
+        await configure_codeowners(config, org)
+        logging.info('----- Configuring Branch Protection -----')
+        await configure_branch_protection(config, org)
 
 async def create_repos(config, org):
     r = Repository(org, config.filename) 
     await r.delete_existing_repos()
     for repo_name in tqdm(config.repo_names, desc='Repos'):
         if repo_name in config.repo_names_mapping_to_public_repos:
+            await r.create(repo_name, auto_init = False)
             await r.clone_public_repo(config.repo_names_mapping_to_public_repos[repo_name]['org'], config.repo_names_mapping_to_public_repos[repo_name]['repo'])
-            logging.info(f'Cloned {config.repo_names_mapping_to_public_repos[repo_name]["repo"]} to org {org} and repo {repo_name}.')
+            logging.debug(f'Cloned {config.repo_names_mapping_to_public_repos[repo_name]["repo"]} to org {org} and repo {repo_name}.')
         else:
-            await r.create(repo_name)
-            logging.info(f'Created {repo_name} in org {org}.')
+            await r.create(repo_name, auto_init = True)
+            logging.debug(f'Created {repo_name} in org {org}.')
     
 async def create_teams(config, org):
     t = Team(org, config.filename)
@@ -87,12 +85,6 @@ async def accept_invitations(config, org):
         token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
         await m.accept_invitation_to_org(token)
 
-async def add_direct_permissions(config, org):
-    dp = DirectPermission(org, config.filename)
-    for member in tqdm(config.members, desc='Direct Permission'):
-        if 'gitgoat_repo_permission' in member:
-            await dp.add_repository_permission('GitGoat',member['login'],member['gitgoat_repo_permission'])
-
 async def setup_actions(config, org):
     a = Actions(org, config.filename)
     await a.enable_selected_repositories_in_org()
@@ -114,12 +106,9 @@ async def setup_actions(config, org):
             await a.enable_selected_actions_in_repo(actions_enabled_repo, verified_allowed=config.repo_configs[actions_enabled_repo]['verified_allowed_actions'])
 
 async def configure_codeowners(config, org):
-    r = Repository(org, config.filename)
     for repo_name in tqdm(config.repo_names, desc='CODEOWNERS'):
-        repo = await r.clone(repo_name, 'GitGoat', Config.get_pat(), 'GitGoat@gitgoat.tools')
-        co = CodeOwners(org,repo_name, repo, config.filename)
-        filename = await co.generate_file()
-        await co.push_file(filename)
+        co = CodeOwners(org,repo_name, config.filename)
+        await co.generate_codeowners()
 
 async def configure_branch_protection(config, org):
     b = Branch(org, config.filename)
@@ -139,13 +128,13 @@ async def create_commits(config, org, secrets):
     for member in config.members:
         token =  member['token'] if 'ghp_' in member['token'] else 'ghp_' + member['token']
         for commit_details in tqdm(member['days_since_last_commit'], desc=f'Commits for {member["login"]}'):
-            repo = await r.clone(commit_details['repo'], member['login'], token, member['email'], commit_details['branch'])
-            c = Commit(repo, secrets, commit_details['repo'], config.filename)
+            c = Commit(secrets, token, config.filename)
+            sha = await c.get_branch_hash(org, commit_details['repo'], commit_details['branch'])
             add_secret = False
             if 'commit_secrets_in_repositories' in member and commit_details['repo'] in member['commit_secrets_in_repositories']:
                 add_secret = True
-            c.generate_random_commits(15, commit_details['days'], commit_secret = add_secret)
-            if commit_details['create_pr']:
+            await c.generate_random_commits(org, commit_details['repo'], commit_details['branch'], sha, 15, commit_details['days'], add_secret)
+            if commit_details['create_pr'] and commit_details['branch'] != 'main':
                 await pr.create_pull_request(token, commit_details['repo'], commit_details['branch'])
 
 async def review_pull_requests(config, org):
@@ -228,7 +217,25 @@ def is_member_allowed_to_merge(config, member, repo):
             return True
     return False
 
+def print_banner():
+    print('''
+         _____  _  _    _____                _        _            
+        |  __ \(_)| |  |  __ \              | |      | |           
+        | |  \/ _ | |_ | |  \/  ___    __ _ | |_     | |__   _   _ 
+        | | __ | || __|| | __  / _ \  / _` || __|    | '_ \ | | | |
+        | |_\ \| || |_ | |_\ \| (_) || (_| || |_     | |_) || |_| |
+         \____/|_| \__| \____/ \___/  \__,_| \__|    |_.__/  \__, |
+         ___                      _               ___         __/ |
+        |  _|                    (_)             |_  |       |___/ 
+        | |    __ _  _ __  _ __   _   ___   __ _   | |             
+        | |   / _` || '__|| '_ \ | | / __| / _` |  | |             
+        | |  | (_| || |   | | | || || (__ | (_| |  | |             
+        | |_  \__,_||_|   |_| |_||_| \___| \__,_| _| |             
+        |___|                                    |___|                                                                                                                
+          ''')
+
 if __name__ == '__main__':
+    print_banner()
     try:
         if sys.argv[sys.argv.index("--config")+1].startswith('--'):
             raise 

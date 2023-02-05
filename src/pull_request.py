@@ -32,7 +32,7 @@ class PullRequest:
             'body': self.fake.paragraph(nb_sentences=3)
         }
         resp = await conn.post(endpoint, json_data=data)
-        return resp['number']
+        return resp
       
     async def review(self, pat, repository, pull_request_number):
         conn = ConnectionHandler(pat, self.config_file)

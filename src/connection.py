@@ -40,6 +40,19 @@ class ConnectionHandler:
         except Exception:
             return {}
     
+    async def post_graphql(self, query, variables, token):
+        headers = self.headers
+        headers['Authorization'] = f'bearer {token}'        
+        resp = requests.post(self.base_url + '/graphql', headers=self.headers, json={"query": query, "variables": variables})
+        if resp.status_code not in [200, 201, 202]:
+            logging.warning(f'The response code for the graphql query with the variables {variables} is {resp.status_code}. Message: {resp.text}')
+            await self.__validate_rate_limit(resp)
+            resp = requests.post(self.base_url + '/graphql', headers=self.headers, json={"query": query, "variables": variables})
+        try:
+            return resp.json()
+        except Exception:
+            return {}
+    
     async def put(self, endpoint, json_data):
         resp = requests.put(self.base_url + endpoint, headers=self.headers, json=json_data, verify=False)
         if resp.status_code not in [200, 201, 204]:

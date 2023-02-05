@@ -1,8 +1,8 @@
-import os, pathlib, logging, subprocess
+import os, pathlib, logging, subprocess, pygit2
 from datetime import datetime, timedelta
 from src.connection import ConnectionHandler
 from src.config import Config
-import pygit2
+from tqdm import tqdm
 
 class IdentityMap:
     
@@ -32,7 +32,7 @@ class IdentityMap:
     
     def map_authors(self):
         map = {}
-        for repo in self.repos_map:
+        for repo in tqdm(self.repos_map, desc='Map GitGoat authors to public repo authors'):
             map[repo] = {}
             members_metadata = self.get_members_from_public_repo(self.repos_map[repo]['org'], self.repos_map[repo]['repo'])
             for member in self.members_activity_config[repo]:
@@ -69,10 +69,10 @@ class IdentityMap:
         remote = f'https://github.com/{organization}/{repository}.git'
         os_path = os.path.join(self.local_repos_path, f'{organization}-{repository}')
         if os.path.isdir(os_path):
-            logging.info(f'A local copy of the repository {organization}/{repository} exists. Pulling recent changes.')
+            logging.debug(f'A local copy of the repository {organization}/{repository} exists. Pulling recent changes.')
             subprocess.run(['git', '-C', os_path, 'pull'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)  
         else:
-            logging.info(f'This is the fist time the repository {organization}/{repository} is cloned, so it may take less time going forward.')
+            logging.debug(f'This is the fist time the repository {organization}/{repository} is cloned, so it may take less time going forward.')
             subprocess.run(['git', 'clone', remote, os_path], stderr=subprocess.DEVNULL)   
         return pygit2.Repository(os_path)
     

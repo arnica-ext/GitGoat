@@ -13,12 +13,13 @@ base_headers:
 org_names:
   - GitGoat-Demo
   
+  
 ## Repo names to generate
 repo_names:
-  - Acai
   - Echinacea
+  - Acai
   - Peppermint
-  - Lavender
+  - Lavender     
   - Chamomile
   - Calendula
   - Tarragon
@@ -29,8 +30,8 @@ repo_names:
 ## This setting is used to generate as much as realistic commits as in other repos based on the "days_since_last_commit" setting in the members section below.
 repo_names_mapping_to_public_repos:
   Acai:
-    org: juice-shop
-    repo: juice-shop
+    org: hardik05
+    repo: Damn_Vulnerable_C_Program
   Echinacea:
     org: arnica-ext
     repo: GitGoat
@@ -59,7 +60,7 @@ repo_names_mapping_to_public_repos:
 ## Specific configurations per repo (optional).
 ### "branch_protection" means the policy is enabled in the main branch
 ### "branch_protection_restirctions" define who can push to the protected branch. A team name is specified by the prefix, e.g. the team "Lavender-push" should be included as "push".
-### "codeowners" configure the codeowners file definitions. The possible paths are '' (root), './github'. or '/docs'. The patterns and users/teams associations are in the codeowners documentations on GitHub, but the name of the teams should include only the postfixes (as explained above).
+### "codeowners" configure the codeowners file definitions. The possible paths are '' (root), '.github/' or 'docs/'. The patterns and users/teams associations are in the codeowners documentations on GitHub, but the name of the teams should include only the postfixes (as explained above).
 ### "actions_enabled" means that the repo has GitHub Action enabled
 ### "allowed_actions" defines the scope of the allowed actions. The options are "all", "selected" or "local_only". It is applicable only if "actions_enabled" is true.
 ### "verified_allowed_actions" defined if verified actions (not neccesarily owned by GitHub) are allowed. It is applicable only if "actions_enabled" is true.
@@ -249,7 +250,6 @@ members:
     login: miker-gg
     email: miker@@gitgoat.tools
     token: xA6DOQRPkmo6wuP5GUfSJCl6u7H3si2a6AFc
-    gitgoat_repo_permission: push
     member_of_groups:
       - Lavender-push
       - Calendula-triage
@@ -266,7 +266,6 @@ members:
     login: archiet-gg
     email: archiet@gitgoat.tools
     token: EbcLokhBwUKnN5WmJz6eOwiXN0sFC04UxDIs
-    gitgoat_repo_permission: admin
     member_of_groups:
       - Echinacea-admin
       - Echinacea-push
@@ -301,7 +300,7 @@ members:
       - repo: Ginger
         days: 100
         branch: feature_G01
-        create_pr: True
+        create_pr: False
       - repo: Wasabi
         days: 25
         branch: feature_W01
@@ -319,7 +318,6 @@ members:
     login: billdp-gg
     email: billdp@gitgoat.tools
     token: Nk6u8zQjI5o1CX9QWNuY4VOpmGIo452GEq2T
-    gitgoat_repo_permission: maintain
     member_of_groups:
       - Echinacea-push
       - Echinacea-pull
@@ -370,7 +368,7 @@ members:
     login: codeyf-gg
     email: codeyf@gitgoat.tools
     token: B81U7smn2ScvPp7nfDXj7RNpTBZvk90tYwiN
-    gitgoat_repo_permission: push
+
     member_of_groups:
       - Echinacea-pull
       - Lavender-push
@@ -384,7 +382,7 @@ members:
       - Peppermint-push
     days_since_last_commit:
       - repo: Lavender
-        days: 101
+        days: 10
         branch: feature_L03
         create_pr: True
       - repo: Chamomile
@@ -398,13 +396,13 @@ members:
       - repo: Calendula
         days: 95
         branch: feature_C03
-        create_pr: True
+        create_pr: False
       - repo: Tarragon
         days: 93
         branch: main
         create_pr: False
       - repo: Ginger
-        days: 100
+        days: 10
         branch: feature_G03
         create_pr: True
       - repo: Wasabi
@@ -421,7 +419,6 @@ members:
     login: debu-gg
     email: debu@gitgoat.tools
     token: NSWR5qmC4g9Cx8Y8yXzQE4kzUmBYWf16ZTsF
-    gitgoat_repo_permission: triage
     member_of_groups:
       - Echinacea-pull
       - Chamomile-pull
@@ -432,4 +429,4 @@ members:
       - repo: Acai
         days: 100
         branch: feature_A03
-        create_pr: True
+        create_pr: False
