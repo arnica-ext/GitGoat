@@ -5,7 +5,7 @@ from src.config import Config
 from datetime import datetime, timedelta
 from src.public_repo_map import IdentityMap
 from datetime import datetime
-import pygit2
+import pygit2, subprocess
 
 class Repository:
     
@@ -53,7 +53,8 @@ class Repository:
                 logging.info(f"Deleted the repository {repo['name']}")
 
     async def get_all(self):
-        return await self.conn.get(self.endpoint)
+        repos = await self.conn.get(self.endpoint)
+        return repos
 
     async def create(self, name, auto_init = False):
         data = {
@@ -76,14 +77,19 @@ class Repository:
         if os.path.isdir(repo_path):
             repo = pygit2.Repository(f'{repo_path}', flags=pygit2.GIT_REPOSITORY_OPEN_BARE)
             remote_name = f'dst-{int(datetime.now().timestamp())}'
+            local_default_branch = Repository.get_local_default_branch(repo_path)
+            await self.replace_public_repo_commits(repo, local_repo_name)
             gitgoat_remote = repo.create_remote(remote_name, self.get_remote(local_repo_name, 'GitGoat', Config.get_pat()))
             try:
-                logging.debug(f'Trying to push the {source_repo} code to {local_repo_name}')
-                gitgoat_remote.push(specs=[f'+refs/heads/{Repository.AMENDED_BRANCH}:refs/heads/main'])
+                logging.debug(f'Trying to push the {source_repo} code to {local_repo_name}')                
+                subprocess.run(['git', '-C', repo_path, 'push', gitgoat_remote.name, f'+{Repository.AMENDED_BRANCH}:{local_default_branch}'])
+                subprocess.run(['git', '-C', repo_path, 'remote', 'remove', gitgoat_remote.name])
+                #gitgoat_remote.push(specs=[f'+refs/heads/{Repository.AMENDED_BRANCH}:refs/heads/main'])
                 logging.debug(f'Successfully pushed the {source_repo} code to {local_repo_name}')
-                gitgoat_remote.prune()
+                #gitgoat_remote.prune()
             except Exception as ex:
-                logging.warning(f'Unable to push the tampered {source_repo} code to {local_repo_name}. Exception: {ex}')
+                subprocess.run(['git', '-C', repo_path, 'remote', 'remove', gitgoat_remote.name])
+                logging.warning(f'Unable to push the TAMPERED {source_repo} code to {local_repo_name}. Exception: {ex}')
             return 
         public_remote = f'https://github.com/{source_org}/{source_repo}.git'
         default_branch = await self.conn.get(f'/repos/{source_org}/{source_repo}')
@@ -95,14 +101,33 @@ class Repository:
                 logging.warning(f'Could not clone the repo {source_repo}. Remaining retry attempts: {retry_attempts - 1}. Error: {ex}.')
                 await self.clone_public_repo(source_org, source_repo, retry_attempts - 1)
             return
+        local_default_branch = Repository.get_local_default_branch(repo_path)
         await self.replace_public_repo_commits(repo, local_repo_name)
         gitgoat_remote = repo.create_remote('dst', self.get_remote(local_repo_name, 'GitGoat', Config.get_pat()))
         try:
             logging.debug(f'Trying to push the {source_repo} code to {local_repo_name}')
-            gitgoat_remote.push(specs=[f'+refs/heads/{Repository.AMENDED_BRANCH}:refs/heads/main'])
+            subprocess.run(['git', '-C', repo_path, 'push', gitgoat_remote.name, f'+{Repository.AMENDED_BRANCH}:{local_default_branch}'])
+            #gitgoat_remote.push(specs=[f'+refs/heads/{Repository.AMENDED_BRANCH}:refs/heads/main'])
             logging.debug(f'Successfully pushed the {source_repo} code to {local_repo_name}')
+            subprocess.run(['git', '-C', repo_path, 'remote', 'remove', gitgoat_remote.name])
         except Exception as ex:
-            logging.warning(f'Unable to push the tampered {source_repo} code to {local_repo_name}. Exception: {ex}')
+            subprocess.run(['git', '-C', repo_path, 'remote', 'remove', gitgoat_remote.name])
+            logging.warning(f'Unable to push the TAMPERED {source_repo} code to {local_repo_name}. Exception: {ex}')
+    
+    
+    def get_local_default_branch(repo_path, remote_name='origin'):
+        try:
+            result = subprocess.run(['git', '-C', repo_path, 'remote', 'show', remote_name], capture_output=True, text=True, check=True)
+            output_lines = result.stdout.split('\n')
+            for line in output_lines:
+                if 'HEAD branch' in line:
+                    return line.split(':')[-1].strip()
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing git command: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        return 'main'
+    
     
     async def replace_public_repo_commits(self, repo, local_repo_name):
         email_to_login_map = self.config.get_email_to_login_map()
@@ -123,7 +148,11 @@ class Repository:
                 and commit.author.email in mapped_authors and \
                 int((datetime.utcnow() - timedelta(last_commit_map[mapped_authors[commit.author.email]])).timestamp()) > commit.commit_time:
                     if ref is None:
-                        ref = repo.branches.local.create(Repository.AMENDED_BRANCH, commit)
+                        try:
+                            ref = repo.branches.local.create(Repository.AMENDED_BRANCH, commit)
+                        except Exception as ex:
+                            logging.warning(f'Failed to create branch {Repository.AMENDED_BRANCH}. Exception: {ex}')
+                            return 
                         continue
                     author = pygit2.Signature(name=email_to_login_map[mapped_authors[commit.author.email]], email=mapped_authors[commit.author.email], time=commit.commit_time, offset=commit.commit_time_offset)
                     Repository.cherrypick(repo, commit, author, author)

@@ -18,14 +18,18 @@ class Commit:
 
     async def get_branch_hash(self, organization: str, repository: str, branch: str):
         resp = await self.conn.get(f'/repos/{organization}/{repository}/git/refs')
+        main_sha = None
+        other_sha = None
         for ref in resp:
             if f'refs/heads/{branch}' == ref['ref']:
                 return ref['object']['sha']
             elif f'refs/heads/main' == ref['ref']:
                 main_sha = ref['object']['sha']
+            else:
+                other_sha = ref['object']['sha']
         json_data = {
                     'ref':f'refs/heads/{branch}',
-                    'sha': main_sha
+                    'sha': main_sha if main_sha is not None else other_sha
                 }
         resp = await self.conn.post(f'/repos/{organization}/{repository}/git/refs', json_data=json_data)
         return resp['object']['sha']

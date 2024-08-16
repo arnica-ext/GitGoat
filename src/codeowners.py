@@ -24,6 +24,12 @@ class CodeOwners:
         
     async def get_branch_hash(self):
         resp = await self.conn.get(f'/repos/{self.org}/{self.repo}/git/ref/heads/main')
+        if 'object' not in resp:
+            resp = await self.conn.get(f'/repos/{self.org}/{self.repo}/git/ref/heads/master')
+            if 'object' not in resp:
+                resp = await self.conn.get(f'/repos/{self.org}/{self.repo}/git/ref/heads/develop')
+                if 'object' not in resp:
+                    logging.error(f'Could not find main, master or develop branch for {self.org}/{self.repo}')
         return resp['object']['sha']
 
     async def generate_file_contents(self):
