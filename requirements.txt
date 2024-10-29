@@ -1,7 +1,7 @@
-gitpython
-Faker
-requests
-pyyaml
-coloredlogs
-tqdm
-pygit2
+gitpython==3.1.31
+Faker==18.7.0
+requests==2.31.0
+pyyaml==6.0
+coloredlogs==5.0.1
+tqdm==4.66.5
+pygit2==1.12.1
