@@ -8,6 +8,7 @@ ARG config_file="config.yaml"
 ARG org_names=[]
 
 # Install Git Client
+RUN add-apt-repository ppa:git-core/ppa
 RUN apt-get -y update
 RUN apt-get -y install git=2.43.0
 
