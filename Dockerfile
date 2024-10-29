@@ -8,8 +8,10 @@ ARG config_file="config.yaml"
 ARG org_names=[]
 
 # Install Git Client
+RUN apt-get install -y software-properties-common
+RUN add-apt-repository ppa:git-core/ppa
 RUN apt-get -y update
-RUN apt-get -y install git
+RUN apt-get -y install git=2.43.0
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
